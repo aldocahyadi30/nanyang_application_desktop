@@ -1,12 +1,11 @@
 import 'dart:io';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:nanyang_application_desktop/CustomScrollBehavior.dart';
 import 'package:nanyang_application_desktop/module/splash_screen.dart';
 import 'package:nanyang_application_desktop/provider/color_provider.dart';
-import 'package:nanyang_application_desktop/provider/configuration_provider.dart';
 import 'package:nanyang_application_desktop/provider/date_provider.dart';
 import 'package:nanyang_application_desktop/provider/file_provider.dart';
 import 'package:nanyang_application_desktop/provider/toast_provider.dart';
@@ -14,22 +13,27 @@ import 'package:nanyang_application_desktop/service/announcement_service.dart';
 import 'package:nanyang_application_desktop/service/attendance_service.dart';
 import 'package:nanyang_application_desktop/service/auth_service.dart';
 import 'package:nanyang_application_desktop/service/chat_service.dart';
+import 'package:nanyang_application_desktop/service/configuration_service.dart';
 import 'package:nanyang_application_desktop/service/employee_service.dart';
-import 'package:nanyang_application_desktop/service/firebase_service.dart';
+import 'package:nanyang_application_desktop/service/navigation_service.dart';
+import 'package:nanyang_application_desktop/service/performance_service.dart';
 import 'package:nanyang_application_desktop/service/request_service.dart';
+import 'package:nanyang_application_desktop/service/salary_service.dart';
 import 'package:nanyang_application_desktop/service/user_service.dart';
 import 'package:nanyang_application_desktop/viewmodel/announcement_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/attendance_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/auth_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/chat_viewmodel.dart';
+import 'package:nanyang_application_desktop/viewmodel/configuration_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/date_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/employee_viewmodel.dart';
+import 'package:nanyang_application_desktop/viewmodel/performance_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/request_viewmodel.dart';
+import 'package:nanyang_application_desktop/viewmodel/salary_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/user_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:window_manager/window_manager.dart';
-import 'firebase_options.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -38,10 +42,6 @@ Future<void> main() async {
 
   await initializeDateFormatting('id_ID', null);
   await dotenv.load(fileName: ".env");
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  await FirebaseService().initNotification();
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
@@ -90,10 +90,16 @@ Future<void> main() async {
           create: (context) => ChatViewModel(chatService: ChatService()),
         ),
         ChangeNotifierProvider(
-          create: (context) => DateViewModel(),
+          create: (context) => SalaryViewModel(salaryService: SalaryService()),
         ),
         ChangeNotifierProvider(
-          create: (context) => ConfigurationProvider(),
+          create: (context) => ConfigurationViewModel(configurationService: ConfigurationService()),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => PerformanceViewmodel(performanceService: PerformanceService()),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => DateViewModel(),
         ),
         ChangeNotifierProvider(
           create: (context) => ToastProvider(),
@@ -107,8 +113,12 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (context) => FileProvider(),
         ),
+        ChangeNotifierProvider(
+          create: (context) => NavigationService(),
+        ),
       ],
       child: MaterialApp(
+        scrollBehavior: Customscrollbehavior(),
         debugShowCheckedModeBanner: false,
         builder: (context, child) {
           return FToastBuilder()(context, child);
@@ -117,14 +127,14 @@ Future<void> main() async {
         theme: ThemeData(
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ButtonStyle(
-              backgroundColor: MaterialStateProperty.all(Colors.blue[100]),
-              overlayColor: MaterialStateProperty.all(Colors.blue),
+              backgroundColor: WidgetStateProperty.all(Colors.blue[100]),
+              overlayColor: WidgetStateProperty.all(Colors.blue),
             ),
           ),
           useMaterial3: true,
           fontFamily: 'Poppins',
           navigationBarTheme: NavigationBarThemeData(
-            labelTextStyle: MaterialStateProperty.all(
+            labelTextStyle: WidgetStateProperty.all(
               const TextStyle(
                 color: Colors.white,
                 fontSize: 12,

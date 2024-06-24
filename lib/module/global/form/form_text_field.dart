@@ -4,31 +4,39 @@ import 'package:nanyang_application_desktop/color_template.dart';
 import 'package:nanyang_application_desktop/helper.dart';
 
 class FormTextField extends StatefulWidget {
-  final String title;
+  final String? title;
+  final String? hintText;
   final Color titleColor;
   final Color fillColor;
   final Color textColor;
-  final TextInputType type;
   final int maxLines;
   final bool isReadOnly;
   final bool isRequired;
+  final bool isObscure;
   final TextEditingController? controller;
+  final List<TextInputFormatter>? inputFormatters;
+  final TextInputType keyboardType;
   final String? initialValue;
   final String? Function(String?) validator;
+  final void Function(String?)? onChanged;
 
   const FormTextField({
     super.key,
-    required this.title,
+    this.title,
+    this.hintText,
     this.titleColor = ColorTemplate.darkVistaBlue,
     this.fillColor = ColorTemplate.lavender,
     this.textColor = ColorTemplate.darkVistaBlue,
-    this.type = TextInputType.text,
     this.maxLines = 1,
     this.isReadOnly = false,
     this.isRequired = true,
+    this.isObscure = false,
     this.initialValue,
     this.controller,
+    this.inputFormatters,
     this.validator = defaultValidator,
+    this.onChanged,
+    this.keyboardType = TextInputType.text,
   });
 
   static String? defaultValidator(String? value) {
@@ -45,63 +53,70 @@ class FormTextField extends StatefulWidget {
 class _FormTextFieldState extends State<FormTextField> {
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       children: [
-        Padding(
-          padding: dynamicPaddingSymmetric(0, 20, context),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: RichText(
-              text: TextSpan(
-                text: widget.title,
-                style: TextStyle(
-                  fontSize: dynamicFontSize(16, context),
-                  fontWeight: FontWeight.w700,
-                  color: widget.titleColor,
-                ),
-                children: widget.isRequired ? <TextSpan>[
-                  TextSpan(
-                    text: ' *',
-                    style: TextStyle(
-                      fontSize: dynamicFontSize(16, context),
-                      fontWeight: FontWeight.w700,
-                      color: Colors.red,
+        Expanded(
+          flex: 4,
+            child: widget.title != null
+                ? RichText(
+                    text: TextSpan(
+                      text: widget.title,
+                      style: TextStyle(
+                        fontSize: dynamicFontSize(24, context),
+                        fontWeight: FontWeight.w700,
+                        color: widget.titleColor,
+                      ),
+                      children: widget.isRequired
+                          ? <TextSpan>[
+                              TextSpan(
+                                text: ' *',
+                                style: TextStyle(
+                                  fontSize: dynamicFontSize(24, context),
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ]
+                          : <TextSpan>[],
                     ),
-                  ),
-                ] : <TextSpan>[],
+                  )
+                : Container()),
+        Expanded(
+          flex: 8,
+          child: SizedBox(
+            child: TextFormField(
+              initialValue: widget.initialValue,
+              controller: widget.controller,
+              validator: widget.isRequired ? widget.validator : null,
+              maxLines: widget.maxLines,
+              keyboardType: widget.keyboardType,
+              readOnly: widget.isReadOnly,
+              onChanged: widget.onChanged,
+              inputFormatters: widget.inputFormatters,
+              obscureText: widget.isObscure,
+              style: TextStyle(
+                fontSize: dynamicFontSize(20, context),
+                color: widget.isReadOnly ? Colors.grey[600] : widget.textColor,
+                fontWeight: FontWeight.w600,
               ),
-            )
-          ),
-        ),
-        SizedBox(
-          height: dynamicHeight(8, context),
-        ),
-        TextFormField(
-          initialValue: widget.initialValue,
-          controller: widget.controller,
-          validator: widget.isRequired ? widget.validator : null,
-          maxLines: widget.maxLines,
-          keyboardType: widget.type,
-          readOnly: widget.isReadOnly,
-          inputFormatters: widget.type == TextInputType.number
-              ? <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly]
-              : <TextInputFormatter>[],
-          style: TextStyle(
-            fontSize: dynamicFontSize(16, context),
-            color: widget.isReadOnly ? Colors.grey[600] : widget.textColor,
-            fontWeight: FontWeight.w600,
-          ),
-          decoration: InputDecoration(
-            contentPadding: dynamicPaddingSymmetric(16, 24, context),
-            enabledBorder: _outlineInputBorder(context),
-            focusedBorder: _outlineInputBorder(context),
-            errorBorder: _errorOutlineInputBorder(context),
-            // Customize error border
-            focusedErrorBorder: _errorOutlineInputBorder(context),
-            // Customize focused error border
-            filled: true,
-            fillColor: widget.fillColor,
-            focusColor: Colors.blue,
+              decoration: InputDecoration(
+                hintText: widget.hintText,
+                hintStyle: TextStyle(
+                  fontSize: dynamicFontSize(20, context),
+                  color: Colors.grey[400],
+                ),
+                contentPadding: dynamicPaddingSymmetric(16, 24, context),
+                enabledBorder: _outlineInputBorder(context),
+                focusedBorder: _outlineInputBorder(context),
+                errorBorder: _errorOutlineInputBorder(context),
+                // Customize error border
+                focusedErrorBorder: _errorOutlineInputBorder(context),
+                // Customize focused error border
+                filled: true,
+                fillColor: widget.fillColor,
+                focusColor: Colors.blue,
+              ),
+            ),
           ),
         ),
       ],

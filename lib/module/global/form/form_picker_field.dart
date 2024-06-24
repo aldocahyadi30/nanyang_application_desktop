@@ -3,24 +3,29 @@ import 'package:nanyang_application_desktop/color_template.dart';
 import 'package:nanyang_application_desktop/helper.dart';
 
 class FormPickerField extends StatefulWidget {
-  final String title;
+  final String? title;
+  final String? hintText;
   final Color titleColor;
   final Color fillColor;
   final Widget picker;
   final Widget? leading;
   final bool isRequired;
-  final TextEditingController controller;
+  final TextEditingController? controller;
+  final String? initialValue;
+
   final String? Function(String?) validator;
   final bool isDisabled;
 
   const FormPickerField({
     super.key,
-    required this.title,
+    this.title,
+    this.hintText,
     this.titleColor = ColorTemplate.darkVistaBlue,
     this.fillColor = ColorTemplate.lavender,
     required this.picker,
     this.isRequired = true,
-    required this.controller,
+    this.controller,
+    this.initialValue,
     this.leading,
     this.validator = defaultValidator,
     this.isDisabled = false,
@@ -40,57 +45,62 @@ class FormPickerField extends StatefulWidget {
 class _FormPickerFieldState extends State<FormPickerField> {
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       children: [
-        Padding(
-          padding: dynamicPaddingSymmetric(0, 20, context),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: RichText(
+        Expanded(
+            flex: 4,
+            child: widget.title != null
+                ? RichText(
               text: TextSpan(
                 text: widget.title,
                 style: TextStyle(
-                  fontSize: dynamicFontSize(16, context),
+                  fontSize: dynamicFontSize(24, context),
                   fontWeight: FontWeight.w700,
                   color: widget.titleColor,
                 ),
-                children: widget.isRequired ? <TextSpan>[
+                children: widget.isRequired
+                    ? <TextSpan>[
                   TextSpan(
                     text: ' *',
                     style: TextStyle(
-                      fontSize: dynamicFontSize(16, context),
+                      fontSize: dynamicFontSize(24, context),
                       fontWeight: FontWeight.w700,
                       color: Colors.red,
                     ),
                   ),
-                ] : <TextSpan>[],
+                ]
+                    : <TextSpan>[],
               ),
             )
-          ),
-        ),
-        SizedBox(
-          height: dynamicHeight(8, context),
-        ),
-        TextFormField(
-          controller: widget.controller,
-          validator: widget.isRequired ? widget.validator : null,
-          readOnly: true,
-          style: TextStyle(
-            fontSize: dynamicFontSize(16, context),
-            color: widget.isDisabled ? Colors.grey : ColorTemplate.darkVistaBlue,
-            fontWeight: FontWeight.w600,
-          ),
-          decoration: InputDecoration(
-            contentPadding: dynamicPaddingSymmetric(16, 24, context),
-            enabledBorder: _outlineInputBorder(context),
-            focusedBorder: _outlineInputBorder(context),
-            errorBorder: _errorOutlineInputBorder(context),
-            focusedErrorBorder: _errorOutlineInputBorder(context),
-            filled: true,
-            fillColor: widget.fillColor,
-            focusColor: Colors.blue,
-            suffixIcon: widget.picker,
-            prefixIcon: widget.leading,
+                : Container()),
+        Expanded(
+          flex: 8,
+          child: SizedBox(
+            child: TextFormField(
+              initialValue: widget.initialValue,
+              controller: widget.controller,
+              validator: widget.isRequired ? widget.validator : null,
+              readOnly: true,
+              style: TextStyle(
+                fontSize: dynamicFontSize(20, context),
+                color: widget.isDisabled ? Colors.grey : ColorTemplate.darkVistaBlue,
+                fontWeight: FontWeight.w600,
+              ),
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: widget.hintText,
+                contentPadding: dynamicPaddingSymmetric(16, 24, context),
+                enabledBorder: _outlineInputBorder(context),
+                focusedBorder: _outlineInputBorder(context),
+                errorBorder: _errorOutlineInputBorder(context),
+                focusedErrorBorder: _errorOutlineInputBorder(context),
+                filled: true,
+                fillColor: widget.fillColor,
+                focusColor: Colors.blue,
+                suffixIcon: widget.picker,
+                prefixIcon: widget.leading,
+              ),
+            ),
           ),
         ),
       ],

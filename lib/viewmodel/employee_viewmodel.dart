@@ -1,34 +1,51 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:nanyang_application_desktop/main.dart';
 import 'package:nanyang_application_desktop/model/employee.dart';
-import 'package:nanyang_application_desktop/provider/toast_provider.dart';
 import 'package:nanyang_application_desktop/service/employee_service.dart';
+import 'package:nanyang_application_desktop/viewmodel/configuration_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EmployeeViewModel extends ChangeNotifier {
   final EmployeeService _employeeService;
-  final ToastProvider _toastProvider = Provider.of<ToastProvider>(navigatorKey.currentContext!, listen: false);
   int workerCount = 0;
   int laborCount = 0;
-  List<EmployeeModel> employee = [];
+  List<EmployeeModel> _employee = [];
+  EmployeeModel _selectedEmployee = EmployeeModel.empty();
+  int currentPage = 0;
 
   EmployeeViewModel({required EmployeeService employeeService}) : _employeeService = employeeService;
+
+  get employee => _employee;
+
+  EmployeeModel get selectedEmployee => _selectedEmployee;
+
+  int get currentPageIndex => currentPage;
+
+  set selectedEmployee(EmployeeModel employee) {
+    _selectedEmployee = employee;
+    notifyListeners();
+  }
+
+  set currentPageIndex(int index) {
+    currentPage = index;
+    notifyListeners();
+  }
 
   Future<void> getEmployee() async {
     try {
       List<Map<String, dynamic>> data = await _employeeService.getEmployee();
 
-      employee = EmployeeModel.fromSupabaseList(data);
+      _employee = EmployeeModel.fromSupabaseList(data);
       notifyListeners();
     } catch (e) {
       if (e is PostgrestException) {
-        debugPrint('Employee error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
+        debugPrint('Employee Get error: ${e.message}');
       } else {
-        debugPrint('Employee error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+        debugPrint('Employee Get error: ${e.toString()}');
       }
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
     }
   }
 
@@ -41,30 +58,85 @@ class EmployeeViewModel extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       if (e is PostgrestException) {
-        debugPrint('Employee error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
+        debugPrint('Employee Count error: ${e.message}');
       } else {
-        debugPrint('Employee error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+        debugPrint('Employee Count error: ${e.toString()}');
       }
     }
+    ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+        const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
   }
 
-  String getShortenedName(String name) {
-    List<String> nameParts = name.split(' ');
-
-    if (nameParts.length == 1) {
-      return nameParts[0];
-    } else if (nameParts.length == 2) {
-      return nameParts.join(' ');
-    } else {
-      return nameParts.take(2).join(' ') + nameParts.skip(2).map((name) => ' ${name[0]}.').join('');
+  Future<void> store(EmployeeModel model) async {
+    try {
+      await _employeeService.store(model);
+      ScaffoldMessenger.of(navigatorKey.currentContext!)
+          .showSnackBar(const SnackBar(content: Text('Berhasil menambahkan karyawan!'), backgroundColor: Colors.green));
+      await index();
+    } catch (e) {
+      if (e is PostgrestException) {
+        debugPrint('Employee Store error: ${e.message}');
+      } else {
+        debugPrint('Employee Store error: ${e.toString()}');
+      }
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
     }
   }
 
-  String getAvatarInitials(String name) {
-    List<String> nameParts = name.split(' ');
+  Future<void> update(EmployeeModel model) async {
+    try {
+      await _employeeService.update(model);
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Data karyawan berhasil diperbarui!'), backgroundColor: Colors.green));
+      await index();
+    } catch (e) {
+      if (e is PostgrestException) {
+        debugPrint('Employee Update error: ${e.message}');
+      } else {
+        debugPrint('Employee Update error: ${e.toString()}');
+      }
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
+    }
+  }
 
-    return ((nameParts.isNotEmpty ? nameParts[0][0] : '') + (nameParts.length > 1 ? nameParts[1][0] : '')).toUpperCase();
+  Future<void> delete(int id) async {
+    try {
+      await _employeeService.delete(id);
+      ScaffoldMessenger.of(navigatorKey.currentContext!)
+          .showSnackBar(const SnackBar(content: Text('Karyawan berhasil dihapus!'), backgroundColor: Colors.green));
+      await index();
+    } catch (e) {
+      if (e is PostgrestException) {
+        debugPrint('Employee Delete error: ${e.message}');
+      } else {
+        debugPrint('Employee Delete error: ${e.toString()}');
+      }
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
+    }
+  }
+
+  Future<void> index() async {
+    currentPageIndex = 0;
+    await getEmployee();
+  }
+
+  Future<void> create() async {
+    currentPageIndex = 1;
+    selectedEmployee = EmployeeModel.empty();
+    await navigatorKey.currentContext!.read<ConfigurationViewModel>().getPosition();
+  }
+
+  Future<void> edit(EmployeeModel model) async {
+    currentPageIndex = 1;
+    selectedEmployee = model;
+    await navigatorKey.currentContext!.read<ConfigurationViewModel>().getPosition();
+  }
+
+  void detail(EmployeeModel model) {
+    currentPageIndex = 2;
+    selectedEmployee = model;
   }
 }

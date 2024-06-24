@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:nanyang_application_desktop/model/request.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RequestService {
@@ -18,16 +18,22 @@ class RequestService {
         waktu_tolak,
         file,
         karyawan:id_karyawan(
-          id_karyawan,
-          nama
+          *,
+          posisi(
+            *
+          )
         ),
         approver:id_approver(
-          id_karyawan,
-          nama
+          *,
+          posisi(
+            *
+          )
         ),
         penolak:id_penolak(
-          id_karyawan,
-          nama
+          *,
+          posisi(
+            *
+          )
         )
         ''');
 
@@ -47,7 +53,7 @@ class RequestService {
 
   Future<List<Map<String, dynamic>>> getListRequest({int? employeeID}) async {
     try {
-      final query = supabase.from('izin').select('''
+      var query = supabase.from('izin').select('''
         id_izin,
         jenis,
         status,
@@ -59,20 +65,25 @@ class RequestService {
         waktu_tolak,
         file,
         karyawan:id_karyawan(
-          id_karyawan,
-          nama
+          *,
+          posisi(
+            *
+          )
         ),
         approver:id_approver(
-          id_karyawan,
-          nama
+          *,
+          posisi(
+            *
+          )
         ),
         penolak:id_penolak(
-          id_karyawan,
-          nama
+          *,
+          posisi(
+            *
+          )
         )
         ''');
-
-      if (employeeID != null) query.eq('id_karyawan', employeeID);
+      if (employeeID != null)query = query.eq('id_karyawan', employeeID);
 
       final data = await query.order('id_izin', ascending: false);
 
@@ -84,60 +95,25 @@ class RequestService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getListRequestByID(int employeeID) async {
-    try {
-      final data = await supabase.from('izin').select('''
-        id_izin,
-        jenis,
-        status,
-        waktu_mulai,
-        waktu_akhir,
-        alasan,
-        komentar,
-        waktu_approve,
-        waktu_tolak,
-        file,
-        karyawan:id_karyawan(
-          id_karyawan,
-          nama
-        ),
-        approver:id_approver(
-          id_karyawan,
-          nama
-        ),
-        penolak:id_penolak(
-          id_karyawan,
-          nama
-        )
-        ''').eq('id_karyawan', employeeID).order('id_izin', ascending: false);
-
-      return data;
-    } on PostgrestException catch (error) {
-      throw PostgrestException(message: error.message);
-    } catch (e) {
-      throw Exception(e.toString());
-    }
-  }
-
-  Future<void> store(int employeeID, int type, String reason, {File? file, String? startTime, String? endTime}) async {
+  Future<void> store(RequestModel model) async {
     try {
       String path = '';
-      if (file != null) {
-        final String fileName = file.path.split('/').last;
-        path = await supabase.storage.from('RequestFile').upload(
-              '/$employeeID/$fileName',
-              file,
+      if (model.file != null) {
+        final String fileName = model.file!.path.split('/').last;
+        path = await supabase.storage.from('request').upload(
+              '/${model.requester.id}/$fileName',
+              model.file!,
               fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
             );
       }
       await supabase.from('izin').insert({
-        'id_karyawan': employeeID,
-        'jenis': type,
-        'waktu_mulai': startTime,
-        'waktu_akhir': endTime,
-        'alasan': reason,
+        'id_karyawan': model.requester.id,
+        'jenis': model.type,
+        'waktu_mulai': model.startDateTime?.toIso8601String(),
+        'waktu_akhir': model.endDateTime?.toIso8601String(),
+        'alasan': model.reason,
         'file': path,
-        'update_oleh': employeeID,
+        'update_oleh': model.requester.id,
       });
     } on PostgrestException catch (error) {
       throw PostgrestException(message: error.message);
@@ -146,35 +122,33 @@ class RequestService {
     }
   }
 
-  Future<void> update(int id, int employeeID, int type, String reason, {File? file, String? startTime, String? endTime}) async {
+  Future<void> update(RequestModel model) async {
     try {
       String path = '';
-      if (file != null) {
-        final String fileName = file.path.split('/').last;
-        path = await supabase.storage.from('RequestFile').upload(
-              '/$employeeID/$fileName',
-              file,
+      if (model.file != null) {
+        final String fileName = model.file!.path.split('/').last;
+        path = await supabase.storage.from('request').upload(
+             '/${model.requester.id}/$fileName',
+              model.file!,
               fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
             );
 
         await supabase.from('izin').update({
-          'id_karyawan': employeeID,
-          'jenis': type,
-          'waktu_mulai': startTime,
-          'waktu_akhir': endTime,
-          'alasan': reason,
+          'jenis': model.type,
+          'waktu_mulai': model.startDateTime?.toIso8601String(),
+          'waktu_akhir': model.endDateTime?.toIso8601String(),
+          'alasan': model.reason,
           'file': path,
-          'update_oleh': employeeID,
-        }).eq('id_izin', id);
+          'update_oleh': model.requester.id,
+        }).eq('id_izin', model.id);
       } else {
         await supabase.from('izin').update({
-          'id_karyawan': employeeID,
-          'jenis': type,
-          'waktu_mulai': startTime,
-          'waktu_akhir': endTime,
-          'alasan': reason,
-          'update_oleh': employeeID,
-        }).eq('id_izin', id);
+          'jenis': model.type,
+          'waktu_mulai': model.startDateTime?.toIso8601String(),
+          'waktu_akhir': model.endDateTime?.toIso8601String(),
+          'alasan': model.reason,
+          'update_oleh': model.requester.id,
+        }).eq('id_izin', model.id);
       }
     } on PostgrestException catch (error) {
       throw PostgrestException(message: error.message);
@@ -183,15 +157,9 @@ class RequestService {
     }
   }
 
-  Future<void> approve(int id, int employeeID, String? comment) async {
+  Future<void> delete(int id) async{
     try {
-      await supabase.from('izin').update({
-        'id_approver': employeeID,
-        'komentar': comment,
-        'status': 1,
-        'waktu_approve': DateTime.now().toIso8601String(),
-        'update_oleh': employeeID,
-      }).eq('id_izin', id);
+      supabase.from('izin').delete().eq('id_izin', id);
     } on PostgrestException catch (error) {
       throw PostgrestException(message: error.message);
     } catch (e) {
@@ -199,15 +167,31 @@ class RequestService {
     }
   }
 
-  Future<void> reject(int id, int employeeID, String comment) async {
+  Future<void> approve(RequestModel model) async {
     try {
       await supabase.from('izin').update({
-        'id_penolak': employeeID,
-        'komentar': comment,
+        'id_approver': model.approver!.id,
+        'komentar': model.comment,
+        'status': 1,
+        'waktu_approve': DateTime.now().toIso8601String(),
+        'update_oleh': model.approver!.id,
+      }).eq('id_izin', model.id);
+    } on PostgrestException catch (error) {
+      throw PostgrestException(message: error.message);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  Future<void> reject(RequestModel model) async {
+    try {
+      await supabase.from('izin').update({
+        'id_penolak': model.rejecter!.id,
+        'komentar': model.comment,
         'status': 2,
         'waktu_tolak': DateTime.now().toIso8601String(),
-        'update_oleh': employeeID,
-      }).eq('id_izin', id);
+        'update_oleh': model.rejecter!.id,
+      }).eq('id_izin', model.id);
     } on PostgrestException catch (error) {
       throw PostgrestException(message: error.message);
     } catch (e) {

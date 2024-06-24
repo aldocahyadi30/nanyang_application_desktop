@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:nanyang_application_desktop/color_template.dart';
-import 'package:nanyang_application_desktop/provider/configuration_provider.dart';
+import 'package:nanyang_application_desktop/helper.dart';
+import 'package:nanyang_application_desktop/module/home_screen.dart';
 import 'package:nanyang_application_desktop/module/auth/screen/login_screen.dart';
-// import 'package:nanyang_application_desktop/module/home_screen.dart';
 import 'package:nanyang_application_desktop/viewmodel/announcement_viewmodel.dart';
+import 'package:nanyang_application_desktop/viewmodel/configuration_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/user_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -45,11 +47,11 @@ class _SplashScreenState extends State<SplashScreen> {
         await Provider.of<UserViewModel>(context, listen: false)
           .getUserByID(Supabase.instance.client.auth.currentUser!.id)
           .then((userData) {
-        Provider.of<ConfigurationProvider>(context, listen: false).setUser(userData);
+        Provider.of<ConfigurationViewModel>(context, listen: false).setUser(userData);
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation1, animation2) => const LoginScreen(),
+            pageBuilder: (context, animation1, animation2) => const HomeScreen(),
             transitionsBuilder: (context, animation, animation2, child) {
               const begin = Offset(0.0, 1.0);
               const end = Offset.zero;
@@ -76,10 +78,10 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Center(
         child: Hero(
           tag: 'logo',
-          child: Image.asset(
-            'assets/image/logo-nanyang.png',
-            width: 175,
-            height: 175,
+          child: SvgPicture.asset(
+            'assets/svg/logo.svg',
+            width: dynamicWidth(300, context),
+            height: dynamicHeight(300, context),
           ),
         ),
       ),

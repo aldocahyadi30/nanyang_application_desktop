@@ -41,15 +41,18 @@ dependencies:
   intl: ^0.19.0
   flex_color_picker: ^3.4.1
   carousel_slider: ^4.2.1
-  font_awesome_flutter: ^10.7.0
   flutter_svg: ^2.0.10+1
   file_picker: ^8.0.3
-  firebase_core: ^2.31.0
-  firebase_messaging: ^14.9.2
   flutter_local_notifications: ^17.1.2
   flutter_dotenv: ^5.1.0
   month_picker_dialog: ^3.0.0
   window_manager: ^0.3.9
+  http: ^1.2.1
+  fl_chart: ^0.68.0
+  mask_text_input_formatter: ^2.9.0
+  currency_text_input_formatter: ^2.2.3
+  ionicons: ^0.2.2
+  data_table_2: ^2.5.12
 
 dev_dependencies:
   flutter_test:
@@ -102,6 +105,7 @@ flutter:
     - assets/svg/no_access.svg
     - assets/svg/door.svg
     - assets/svg/login_bg.svg
+    - assets/svg/logo.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

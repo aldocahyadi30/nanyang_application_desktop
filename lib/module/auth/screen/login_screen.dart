@@ -57,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Hero(
                             tag: 'logo',
-                            child: Image.asset(
+                            child: SvgPicture.asset(
                               'assets/image/logo-nanyang.png',
                               width: dynamicWidth(250, context),
                               height: dynamicHeight(250, context),

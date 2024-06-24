@@ -3,47 +3,48 @@ import 'package:nanyang_application_desktop/main.dart';
 import 'package:nanyang_application_desktop/model/user.dart';
 import 'package:nanyang_application_desktop/module/auth/screen/login_screen.dart';
 import 'package:nanyang_application_desktop/module/home_screen.dart';
-import 'package:nanyang_application_desktop/provider/configuration_provider.dart';
-import 'package:nanyang_application_desktop/provider/toast_provider.dart';
 import 'package:nanyang_application_desktop/service/auth_service.dart';
-import 'package:nanyang_application_desktop/service/firebase_service.dart';
+import 'package:nanyang_application_desktop/service/navigation_service.dart';
+import 'package:nanyang_application_desktop/viewmodel/configuration_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/user_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthenticationService _authenticationService;
-  final ToastProvider _toastProvider = Provider.of<ToastProvider>(navigatorKey.currentContext!, listen: false);
+  final NavigationService _navigationService =
+      Provider.of<NavigationService>(navigatorKey.currentContext!, listen: false);
   final userViewModel = Provider.of<UserViewModel>(navigatorKey.currentContext!, listen: false);
-  final firebaseService = FirebaseService();
+  final configViewModel = Provider.of<ConfigurationViewModel>(navigatorKey.currentContext!, listen: false);
 
   AuthViewModel({required AuthenticationService authenticationService})
       : _authenticationService = authenticationService;
 
   Future<void> login(String email, String password) async {
     try {
-      String? token = await firebaseService.getFCMToken();
-
-      final Map<String, dynamic> user = await _authenticationService.login(email, password, token);
+      final Map<String, dynamic> user = await _authenticationService.login(email, password);
 
       if (user['id'] != '') {
-        navigatorKey.currentContext!.read<ConfigurationProvider>().setUser(UserModel.fromSupabase(user));
+        configViewModel.setUser(UserModel.fromSupabase(user));
+        await configViewModel.initialize();
 
-        _toastProvider.showToast('Login berhasil!', 'success');
-        redirect(const HomeScreen(), true);
-      } else {
-        return;
+        ScaffoldMessenger.of(navigatorKey.currentContext!)
+            .showSnackBar(const SnackBar(content: Text('Login berhasil'), backgroundColor: Colors.green));
+        _navigationService.navigateToReplace(const HomeScreen());
       }
     } catch (e) {
       if (e is AuthException) {
         debugPrint('Auth error: ${e.message}');
-        _toastProvider.showToast('Akun tidak ditemukan!', 'error');
+        ScaffoldMessenger.of(navigatorKey.currentContext!)
+            .showSnackBar(const SnackBar(content: Text('Akun tidak ditemukan!'), backgroundColor: Colors.red));
       } else if (e is PostgrestException) {
         debugPrint('Auth error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
       } else {
         debugPrint('Auth error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
       }
     }
   }
@@ -53,18 +54,22 @@ class AuthViewModel extends ChangeNotifier {
     try {
       await _authenticationService.register(email, password, employeeID, level);
 
-      _toastProvider.showToast('Registrasi berhasil!', 'success');
-      userViewModel.getUser();
+      ScaffoldMessenger.of(navigatorKey.currentContext!)
+          .showSnackBar(const SnackBar(content: Text('Registrasi berhasil'), backgroundColor: Colors.green));
+      await userViewModel.index();
     } catch (e) {
       if (e is AuthException) {
         debugPrint('Register error: ${e.message}');
-        _toastProvider.showToast('Email sudah terdaftar!', 'error');
+        ScaffoldMessenger.of(navigatorKey.currentContext!)
+            .showSnackBar(const SnackBar(content: Text('Email sudah terdaftar!'), backgroundColor: Colors.red));
       } else if (e is PostgrestException) {
         debugPrint('Register error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
       } else {
         debugPrint('Register error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
       }
     }
   }
@@ -73,18 +78,22 @@ class AuthViewModel extends ChangeNotifier {
     try {
       await _authenticationService.update(uid, email, employeeID, level);
 
-      _toastProvider.showToast('Data user berhasil diperbarui!', 'success');
-      userViewModel.getUser();
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Data user berhasil diperbaharui!!'), backgroundColor: Colors.green));
+      await userViewModel.index();
     } catch (e) {
       if (e is AuthException) {
         debugPrint('Update error: ${e.message}');
-        _toastProvider.showToast('Gagal memperbarui data user!', 'error');
+        ScaffoldMessenger.of(navigatorKey.currentContext!)
+            .showSnackBar(const SnackBar(content: Text('Gagal memperbarui data user!'), backgroundColor: Colors.red));
       } else if (e is PostgrestException) {
         debugPrint('Update error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
       } else {
         debugPrint('Update error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
       }
     }
   }
@@ -93,18 +102,22 @@ class AuthViewModel extends ChangeNotifier {
     try {
       await _authenticationService.delete(uid);
 
-      _toastProvider.showToast('Data user berhasil dihapus!', 'success');
-      userViewModel.getUser();
+      ScaffoldMessenger.of(navigatorKey.currentContext!)
+          .showSnackBar(const SnackBar(content: Text('User berhasil dihapus'), backgroundColor: Colors.green));
+      await userViewModel.index();
     } catch (e) {
       if (e is AuthException) {
         debugPrint('Delete error: ${e.message}');
-        _toastProvider.showToast('Gagal menghapus data user!', 'error');
+        ScaffoldMessenger.of(navigatorKey.currentContext!)
+            .showSnackBar(const SnackBar(content: Text('Gagal menghapus user!'), backgroundColor: Colors.red));
       } else if (e is PostgrestException) {
         debugPrint('Delete error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
       } else {
         debugPrint('Delete error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
       }
     }
   }
@@ -113,37 +126,23 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> logout() async {
     try {
       await _authenticationService.logout();
-      _toastProvider.showToast('Logout berhasil!', 'success');
-      redirect(const LoginScreen(), true);
+      ScaffoldMessenger.of(navigatorKey.currentContext!)
+          .showSnackBar(const SnackBar(content: Text('Logout berhasil!!'), backgroundColor: Colors.green));
+      _navigationService.navigateToReplace(const LoginScreen());
     } catch (e) {
       if (e is AuthException) {
         debugPrint('Logout error: ${e.message}');
-        _toastProvider.showToast('Logout gagal!', 'error');
+        ScaffoldMessenger.of(navigatorKey.currentContext!)
+            .showSnackBar(const SnackBar(content: Text('Logout gagal!'), backgroundColor: Colors.red));
       } else if (e is PostgrestException) {
         debugPrint('Logout error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
       } else {
         debugPrint('Logout error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
       }
-    }
-  }
-
-  void redirect(Widget screen, bool isReplace) {
-    if (isReplace) {
-      Navigator.pushReplacement(
-        navigatorKey.currentContext!,
-        MaterialPageRoute(
-          builder: (context) => screen,
-        ),
-      );
-    } else {
-      Navigator.push(
-        navigatorKey.currentContext!,
-        MaterialPageRoute(
-          builder: (context) => screen,
-        ),
-      );
     }
   }
 }

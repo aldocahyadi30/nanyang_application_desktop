@@ -5,45 +5,51 @@ import 'package:nanyang_application_desktop/model/announcement.dart';
 import 'package:nanyang_application_desktop/model/announcement_category.dart';
 import 'package:nanyang_application_desktop/provider/toast_provider.dart';
 import 'package:nanyang_application_desktop/service/announcement_service.dart';
+import 'package:nanyang_application_desktop/service/navigation_service.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AnnouncementViewModel extends ChangeNotifier {
   final AnnouncementService _announcementService;
   final ToastProvider _toastProvider = Provider.of<ToastProvider>(navigatorKey.currentContext!, listen: false);
+  final NavigationService _navigationService = Provider.of<NavigationService>(navigatorKey.currentContext!, listen: false);
   List<AnnouncementModel> _announcement = [];
   List<AnnouncementModel> _announcementDashboard = [];
   List<AnnouncementCategoryModel> _announcementCategory = [];
+  AnnouncementModel _selectedAnnouncement = AnnouncementModel.empty();
   List<int> selectedCategory = [];
 
-
-  AnnouncementViewModel({required AnnouncementService announcementService})
-      : _announcementService = announcementService;
+  AnnouncementViewModel({required AnnouncementService announcementService}) : _announcementService = announcementService;
 
   get announcement => _announcement;
   get announcementDashboard => _announcementDashboard;
   get announcementCategory => _announcementCategory;
+  AnnouncementModel get selectedAnnouncement => _selectedAnnouncement;
+
+  set selectedAnnouncement(AnnouncementModel model) {
+    _selectedAnnouncement = model;
+    notifyListeners();
+  }
 
   Future<void> getDashboardAnnouncement() async {
     try {
-      List<Map<String,dynamic>> data = await _announcementService.getDashboardAnnouncement();
+      List<Map<String, dynamic>> data = await _announcementService.getDashboardAnnouncement();
       _announcementDashboard = AnnouncementModel.fromSupabaseList(data);
 
       notifyListeners();
     } catch (e) {
       if (e is PostgrestException) {
-        debugPrint('Announcement error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
+        debugPrint('Announcement get dashboard error: ${e.message}');
       } else {
-        debugPrint('Announcement error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+        debugPrint('Announcement get dashboard error: ${e.toString()}');
       }
+      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
     }
   }
 
   Future<void> getAnnouncement({List<int> categoryID = const []}) async {
     try {
-      List<Map<String,dynamic>> data = [];
+      List<Map<String, dynamic>> data = [];
       if (categoryID.isEmpty) {
         data = await _announcementService.getAnnouncement();
       } else {
@@ -54,53 +60,33 @@ class AnnouncementViewModel extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       if (e is PostgrestException) {
-        debugPrint('Announcement error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
+        debugPrint('Announcement get error: ${e.message}');
       } else {
-        debugPrint('Announcement error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+        debugPrint('Announcement get error: ${e.toString()}');
       }
+      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
     }
   }
 
   Future<void> getAnnouncementCategory() async {
     try {
-      List<Map<String,dynamic>> data = await _announcementService.getAnnouncementCategory();
+      List<Map<String, dynamic>> data = await _announcementService.getAnnouncementCategory();
       _announcementCategory = AnnouncementCategoryModel.fromSupabaseList(data);
 
       notifyListeners();
     } catch (e) {
       if (e is PostgrestException) {
-        debugPrint('Announcement error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
+        debugPrint('Announcement get category error: ${e.message}');
       } else {
-        debugPrint('Announcement error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+        debugPrint('Announcement get category error: ${e.toString()}');
       }
+      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
     }
   }
 
-  Future<void> store(
-      int categoryId, String title, String content, String date, String time, int duration, bool isPosted) async {
-    try {
-      DateTime tempDate = DateFormat('dd-MM-yyyy').parse(date);
-      DateTime tempTime = DateFormat('HH:mm').parse(time);
-      DateTime postDate = DateTime(tempDate.year, tempDate.month, tempDate.day, tempTime.hour, tempTime.minute);
 
-      await _announcementService.storeAnnouncement(categoryId, title, content, postDate, duration, isPosted);
-      _toastProvider.showToast('Berhasil menambahkan pengumuman!', 'success');
 
-      getAnnouncement();
-    } catch (e) {
-      if (e is PostgrestException) {
-        debugPrint('Announcement error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
-      } else {
-        debugPrint('Announcement error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
-      }
-    }
-  }
+
 
   Future<void> storeAnnouncementCategory(String title, String color) async {
     try {
@@ -110,12 +96,11 @@ class AnnouncementViewModel extends ChangeNotifier {
       getAnnouncementCategory();
     } catch (e) {
       if (e is PostgrestException) {
-        debugPrint('Announcement error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
+        debugPrint('Announcement store category error: ${e.message}');
       } else {
-        debugPrint('Announcement error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+        debugPrint('Announcement store category error: ${e.toString()}');
       }
+      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
     }
   }
 
@@ -127,14 +112,75 @@ class AnnouncementViewModel extends ChangeNotifier {
       getAnnouncementCategory();
     } catch (e) {
       if (e is PostgrestException) {
-        debugPrint('Announcement error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
+        debugPrint('Announcement update category error: ${e.message}');
       } else {
-        debugPrint('Announcement error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+        debugPrint('Announcement update catgeory error: ${e.toString()}');
       }
+      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
     }
   }
 
+  // Future<void> index()async{
+  //   await getAnnouncement().then((_){
+  //     _navigationService.navigateTo(const AnnouncementScreen());
+  //   });
+  // }
+  //
+  // void create(){
+  //   _selectedAnnouncement = AnnouncementModel.empty();
+  //   _navigationService.navigateTo(const AnnouncementFormScreen());
+  // }
+
+  Future<void> store(AnnouncementModel model) async {
+    try {
+      await _announcementService.storeAnnouncement(model).then((_) {
+        _toastProvider.showToast('Berhasil menambahkan pengumuman!', 'success');
+        getAnnouncement();
+        _navigationService.goBack();
+      });
+    } catch (e) {
+      if (e is PostgrestException) {
+        debugPrint('Announcement store error: ${e.message}');
+      } else {
+        debugPrint('Announcement store error: ${e.toString()}');
+      }
+      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+    }
+  }
+
+  // void detail(AnnouncementModel model){
+  //   _selectedAnnouncement = model;
+  //   _navigationService.navigateTo(const AnnouncementDetailScreen());
+  // }
+  //
+  // void edit(AnnouncementModel model){
+  //   _selectedAnnouncement = model;
+  //   _navigationService.navigateTo(const AnnouncementFormScreen());
+  // }
+
+  Future<void> update(AnnouncementModel model) async {
+    try {
+      await _announcementService.updateAnnouncement(model).then((_) {
+        _toastProvider.showToast('Berhasil update pengumuman!', 'success');
+        getAnnouncement();
+        _navigationService.goBack();
+      });
+    } catch (e) {
+      if (e is PostgrestException) {
+        debugPrint('Announcement store error: ${e.message}');
+      } else {
+        debugPrint('Announcement store error: ${e.toString()}');
+      }
+      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+    }
+  }
+
+  Future<void> delete() async{
+    await _announcementService.deleteAnnouncement(_selectedAnnouncement.id).then((_) {
+      _toastProvider.showToast('Berhasil menghapus pengumuman!', 'success');
+      getAnnouncement();
+      _navigationService.goBack();
+    });
+  }
 
 }

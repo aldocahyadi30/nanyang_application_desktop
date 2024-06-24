@@ -5,7 +5,7 @@ class AuthenticationService {
   SupabaseClient supabase = Supabase.instance.client;
   final adminSupabase = SupabaseClient(dotenv.env['SUPABASE_URL']!, dotenv.env['SUPABASE_SERVICE_KEY']!);
 
-  Future<Map<String, dynamic>> login(String email, String password, String? token) async {
+  Future<Map<String, dynamic>> login(String email, String password) async {
     try {
       final AuthResponse res = await supabase.auth.signInWithPassword(
         email: email,
@@ -18,24 +18,13 @@ class AuthenticationService {
         try {
           final data = await supabase.from('user').select('''
           *,
-          karyawan(
-            id_karyawan,
-            nama,
-            posisi(
-              id_posisi,
-              nama,
-              tipe
+          karyawan!inner(
+            *,
+            posisi!inner(
+              *
             )
           )
           ''').eq('id_user', user.id).single();
-
-
-        await supabase.from('fcm').upsert({
-            'id_user': user.id,
-            'token': token,
-            'tanggal_dibuat': DateTime.now().toIso8601String(),
-          }, onConflict: 'id_user');
-
 
 
           return data;
@@ -127,4 +116,15 @@ class AuthenticationService {
       throw Exception(e.toString());
     }
   }
+
+  // Future<dynamic> sendOTP(String email, String phone) async {
+  //   try {
+  //     final otp = await supabase.auth.resend(type: OtpType.sms, phone: phone);
+  //     return otp;
+  //   } on AuthException catch (e) {
+  //     throw AuthException(e.message);
+  //   } catch (e) {
+  //     throw Exception(e.toString());
+  //   }
+  // }
 }

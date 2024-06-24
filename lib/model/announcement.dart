@@ -1,53 +1,70 @@
-import 'package:flutter/material.dart';
+import 'package:nanyang_application_desktop/model/announcement_category.dart';
+import 'package:nanyang_application_desktop/model/employee.dart';
 
 class AnnouncementModel {
   final int id;
-  final int categoryId;
-  final String categoryName;
-  final Color categoryColor;
-  final int employeeID;
-  final String employeeName;
-  final String title;
-  final String content;
-  final DateTime? postDate;
-  final int duration;
-  final bool isSend;
-  final int status;
+  String title;
+  String content;
+  DateTime? postDate;
+  int duration;
+  bool isSend;
+  int status;
+  EmployeeModel employee;
+  AnnouncementCategoryModel category;
 
   AnnouncementModel({
     required this.id,
-    required this.categoryId,
-    required this.categoryName,
-    required this.categoryColor,
-    required this.employeeID,
-    required this.employeeName,
     required this.title,
     required this.content,
     this.postDate,
-    required this.duration,
+    this.duration = 0,
     this.isSend = false,
     this.status = 0,
+    required this.employee,
+    required this.category,
   });
 
-  static List<AnnouncementModel> fromSupabaseList(List<Map<String, dynamic>> announcements) {
-    return announcements.map((announcement) {
-      String colorHex = announcement['pengumuman_kategori']['kode_warna'];
-      Color color = Color(int.parse(colorHex));
+  factory AnnouncementModel.fromSupabase(Map<String, dynamic> announcement) {
+    return AnnouncementModel(
+      id: announcement['id_pengumuman'],
+      title: announcement['judul'],
+      content: announcement['isi'],
+      postDate: announcement['waktu_kirim'] != null ? DateTime.parse(announcement['waktu_kirim']) : null,
+      duration: int.parse(announcement['durasi']),
+      isSend: announcement['sudah_kirim'],
+      status: announcement['status'],
+      employee: EmployeeModel.fromSupabase(announcement['karyawan']),
+      category: AnnouncementCategoryModel.fromSupabase(announcement['pengumuman_kategori']),
+    );
+  }
 
-      return AnnouncementModel(
-        id: announcement['id_pengumuman'],
-        categoryId: announcement['pengumuman_kategori']['id_kategori'],
-        categoryName: announcement['pengumuman_kategori']['nama'],
-        categoryColor: color,
-        employeeID: announcement['karyawan']['id_karyawan'],
-        employeeName: announcement['karyawan']['nama'],
-        title: announcement['judul'],
-        content: announcement['isi'],
-        postDate: announcement['waktu_kirim'] != null ? DateTime.parse(announcement['waktu_kirim']) : null,
-        duration: int.parse(announcement['durasi']),
-        isSend: announcement['sudah_kirim'],
-        status: announcement['status'],
-      );
-    }).toList();
+  static List<AnnouncementModel> fromSupabaseList(List<Map<String, dynamic>> announcements) {
+    return announcements.map((announcement) => AnnouncementModel.fromSupabase(announcement)).toList();
+  }
+
+  factory AnnouncementModel.empty() {
+    return AnnouncementModel(
+      id: 0,
+      title: '',
+      content: '',
+      postDate: null,
+      duration: 0,
+      employee: EmployeeModel.empty(),
+      category: AnnouncementCategoryModel.empty(),
+    );
+  }
+
+  factory AnnouncementModel.copyWith(AnnouncementModel announcement) {
+    return AnnouncementModel(
+      id: announcement.id,
+      title: announcement.title,
+      content: announcement.content,
+      postDate: announcement.postDate,
+      duration: announcement.duration,
+      isSend: announcement.isSend,
+      status: announcement.status,
+      employee: announcement.employee,
+      category: announcement.category,
+    );
   }
 }
