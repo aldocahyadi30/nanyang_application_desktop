@@ -5,7 +5,7 @@ class AuthenticationService {
   SupabaseClient supabase = Supabase.instance.client;
   final adminSupabase = SupabaseClient(dotenv.env['SUPABASE_URL']!, dotenv.env['SUPABASE_SERVICE_KEY']!);
 
-  Future<Map<String, dynamic>> login(String email, String password) async {
+  Future<bool> login(String email, String password) async {
     try {
       final AuthResponse res = await supabase.auth.signInWithPassword(
         email: email,
@@ -16,18 +16,7 @@ class AuthenticationService {
         throw Exception('User not foumd');
       } else {
         try {
-          final data = await supabase.from('user').select('''
-          *,
-          karyawan!inner(
-            *,
-            posisi!inner(
-              *
-            )
-          )
-          ''').eq('id_user', user.id).single();
-
-
-          return data;
+          return true;
         } on PostgrestException catch (error) {
           throw PostgrestException(message: error.message);
         } catch (e) {

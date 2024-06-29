@@ -2,9 +2,12 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:nanyang_application_desktop/main.dart';
 import 'package:nanyang_application_desktop/model/chat.dart';
 import 'package:nanyang_application_desktop/model/message.dart';
 import 'package:nanyang_application_desktop/service/chat_service.dart';
+import 'package:nanyang_application_desktop/viewmodel/dashboard_viewmodel.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ChatViewModel extends ChangeNotifier {
@@ -102,5 +105,10 @@ class ChatViewModel extends ChangeNotifier {
   Future<void> openChat(ChatModel model) async{
     selectedChat = model;
     await _chatService.readMessage(model.id);
+  }
+
+  void index(){
+    selectedChat = ChatModel.empty();
+    navigatorKey.currentContext!.read<DashboardViewmodel>().title = 'Help Chat';
   }
 }

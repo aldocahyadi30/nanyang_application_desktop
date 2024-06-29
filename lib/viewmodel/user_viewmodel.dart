@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nanyang_application_desktop/main.dart';
 import 'package:nanyang_application_desktop/model/user.dart';
 import 'package:nanyang_application_desktop/service/user_service.dart';
+import 'package:nanyang_application_desktop/viewmodel/dashboard_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/employee_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -11,12 +12,25 @@ class UserViewModel extends ChangeNotifier {
   List<UserModel> _user = [];
   UserModel  _selectedUser = UserModel.empty();
   int currentPage = 0;
+  int _filterLevel = 0;
 
   UserViewModel({required UserService userService}) : _userService = userService;
 
   get user => _user;
+  get filteredUser{
+    if (_filterLevel == 0) {
+      return _user;
+    } else if (_filterLevel == 1) {
+      return _user.where((element) => element.level == 1).toList();
+    } else if (_filterLevel == 2) {
+      return _user.where((element) => element.level == 2).toList();
+    } else {
+      return _user.where((element) => element.level == 3).toList();
+    }
+  }
   UserModel get selectedUser => _selectedUser;
   int get currentPageIndex => currentPage;
+  int get filterLevel => _filterLevel;
 
   set selectedUser(UserModel user) {
     _selectedUser = user;
@@ -25,6 +39,11 @@ class UserViewModel extends ChangeNotifier {
 
   set currentPageIndex(int index) {
     currentPage = index;
+    notifyListeners();
+  }
+
+  set filterLevel(int level) {
+    _filterLevel = level;
     notifyListeners();
   }
 
@@ -65,6 +84,8 @@ class UserViewModel extends ChangeNotifier {
 
   Future<void> index() async{
     currentPageIndex = 0;
+    filterLevel = 0;
+    navigatorKey.currentContext!.read<DashboardViewmodel>().title = 'User';
     await getUser();
   }
 

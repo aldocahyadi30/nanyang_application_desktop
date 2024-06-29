@@ -1,12 +1,16 @@
+import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
+import 'package:ionicons/ionicons.dart';
 import 'package:nanyang_application_desktop/color_template.dart';
 import 'package:nanyang_application_desktop/helper.dart';
 import 'package:nanyang_application_desktop/model/request.dart';
+import 'package:nanyang_application_desktop/module/global/other/nanyang_button.dart';
 import 'package:nanyang_application_desktop/viewmodel/request_viewmodel.dart';
 import 'package:provider/provider.dart';
 
 class RequestTable extends StatefulWidget {
   final Widget? actionButton;
+
   const RequestTable({super.key, this.actionButton});
 
   @override
@@ -30,36 +34,43 @@ class _RequestTableState extends State<RequestTable> {
     return Selector<RequestViewModel, List<RequestModel>>(
         selector: (context, viewmodel) => viewmodel.request,
         builder: (context, request, child) {
-          return Scrollbar(
-            controller: _scrollController,
-            child: PaginatedDataTable(
-              header: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Daftar Perizinan',
-                    style: TextStyle(fontSize: dynamicFontSize(24, context), fontWeight: FontWeight.w700),
-                  ),
-                  if (widget.actionButton != null) widget.actionButton!,
-                ],
-              ),
-              headingRowHeight: dynamicHeight(48, context),
-              dataRowMinHeight: dynamicHeight(48, context),
-              dataRowMaxHeight: dynamicHeight(64, context),
-              showEmptyRows: false,
-              controller: _scrollController,
-              columns: <DataColumn>[
-                DataColumn(label: Expanded(child: Text('Karyawan', style: tableHeaderStyle(context)))),
-                DataColumn(label: Expanded(child: Text('Jenis', style: tableHeaderStyle(context)))),
-                DataColumn(label: Expanded(child: Text('Tanggal Mulai', style: tableHeaderStyle(context)))),
-                DataColumn(label: Expanded(child: Text('Tanggal Selesai', style: tableHeaderStyle(context)))),
-                DataColumn(label: Expanded(child: Text('Status', style: tableHeaderStyle(context)))),
-                DataColumn(label: Expanded(child: Text('Admin', style: tableHeaderStyle(context)))),
-                DataColumn(label: Expanded(child: Text('Action', style: tableHeaderStyle(context)))),
+          return PaginatedDataTable2(
+            header: Row(
+              children: [
+                Icon(
+                  Ionicons.document,
+                  size: dynamicFontSize(24, context),
+                  color: Colors.black,
+                ),
+                SizedBox(width: dynamicWidth(8, context)),
+                Text(
+                  'Daftar Perizinan',
+                  style: TextStyle(fontSize: dynamicFontSize(20, context), fontWeight: FontWeight.w700),
+                ),
               ],
-              source: DataSource(request, context),
-              rowsPerPage: 10,
             ),
+            actions: [
+              if (widget.actionButton != null) widget.actionButton!,
+            ],
+            headingRowHeight: dynamicHeight(48, context),
+            dataRowHeight: dynamicHeight(80, context),
+            headingTextStyle: tableHeaderStyle(context),
+            dataTextStyle: tableDataStyle(context),
+            columnSpacing: dynamicWidth(8, context),
+            horizontalMargin: dynamicWidth(24, context),
+            renderEmptyRowsInTheEnd: false,
+            minWidth: dynamicWidth(800, context),
+            columns: <DataColumn>[
+              DataColumn2(label: const Text('Karyawan'), numeric: false, fixedWidth: dynamicWidth(250, context)),
+              const DataColumn2(label: Text('Jenis'), numeric: false, size: ColumnSize.M),
+              const DataColumn2(label: Text('Tanggal Mulai'), numeric: false),
+              const DataColumn2(label: Text('Tanggal Selesai'), numeric: false),
+              const DataColumn2(label: Text('Status'), numeric: false),
+              DataColumn2(label: const Text('Admin'), numeric: false, fixedWidth: dynamicWidth(150, context)),
+              const DataColumn2(label: Text('Action'), numeric: false, size: ColumnSize.S),
+            ],
+            source: DataSource(request, context),
+            rowsPerPage: 10,
           );
         });
   }
@@ -117,29 +128,85 @@ class DataSource extends DataTableSource {
         typeName = 'Izin Lembur';
         break;
     }
+    Color rowColor = index.isEven ? Colors.grey[200]! : Colors.white;
 
-    return DataRow(cells: [
-      DataCell(Text(model.requester.name, style: tableDataStyle(context))),
-      DataCell(Text(typeName, style: tableDataStyle(context))),
-      DataCell(Text(startDate ?? '-', style: tableDataStyle(context))),
-      DataCell(Text(endDate ?? '-', style: tableDataStyle(context))),
-      DataCell(_statusBadge(context, model.status)),
-      DataCell(Text(adminName, style: tableDataStyle(context))),
-      DataCell(_actionButton(context, model.status, model)),
-    ]);
+    return DataRow(
+      color: WidgetStateProperty.all<Color>(rowColor),
+      cells: [
+        DataCell(
+          Row(
+            children: [
+              CircleAvatar(
+                radius: dynamicWidth(24, context),
+                backgroundColor: Colors.black,
+                child: Text(model.requester.initials!,
+                    style: TextStyle(color: Colors.white, fontSize: dynamicFontSize(16, context))),
+              ),
+              SizedBox(width: dynamicWidth(12, context)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    model.requester.shortedName!,
+                    style: listTileTitle(context),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    model.requester.position.name,
+                    style: listTileSubtitle(context),
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+        DataCell(Text(typeName)),
+        DataCell(Text(startDate ?? '-')),
+        DataCell(Text(endDate ?? '-')),
+        DataCell(_statusBadge(context, model.status)),
+        DataCell(Text(
+          adminName,
+          overflow: TextOverflow.ellipsis,
+        )),
+        DataCell(_actionButton(context, model.status, model)),
+      ],
+    );
   }
 }
 
 TextStyle tableHeaderStyle(BuildContext context) {
   return TextStyle(
-    fontSize: dynamicFontSize(24, context),
-    fontWeight: FontWeight.bold,
+    fontFamily: 'Poppins',
+    fontSize: dynamicFontSize(16, context),
+    color: Colors.black,
+    fontWeight: FontWeight.w600,
   );
 }
 
 TextStyle tableDataStyle(BuildContext context) {
   return TextStyle(
-    fontSize: dynamicFontSize(20, context),
+    fontFamily: 'Poppins',
+    fontSize: dynamicFontSize(16, context),
+    color: Colors.black,
+    fontWeight: FontWeight.w600,
+  );
+}
+
+TextStyle listTileTitle(BuildContext context) {
+  return TextStyle(
+    fontFamily: 'Poppins',
+    fontSize: dynamicFontSize(16, context),
+    color: Colors.black,
+    fontWeight: FontWeight.w600,
+  );
+}
+
+TextStyle listTileSubtitle(BuildContext context) {
+  return TextStyle(
+    fontFamily: 'Poppins',
+    fontSize: dynamicFontSize(12, context),
+    color: Colors.grey,
     fontWeight: FontWeight.w500,
   );
 }
@@ -179,109 +246,88 @@ Widget _statusBadge(BuildContext context, int status) {
       borderRadius: BorderRadius.circular(8),
     ),
     child: Text(text,
-        style: TextStyle(color: textColor, fontSize: dynamicFontSize(16, context), fontWeight: FontWeight.w500)),
+        style: TextStyle(color: textColor, fontSize: dynamicFontSize(12, context), fontWeight: FontWeight.w500)),
   );
 }
 
 Widget _actionButton(BuildContext context, int status, RequestModel model) {
   if (status == 1) {
-    return FilledButton(
-      style: ButtonStyle(
-        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(dynamicPaddingAll(8, context)),
-        backgroundColor: WidgetStateProperty.all<Color>(ColorTemplate.vistaBlue),
-        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      ),
-      onPressed: () => context.read<RequestViewModel>().detail(model),
-      child: const Icon(
-        Icons.remove_red_eye,
-        color: ColorTemplate.periwinkle,
+    return SizedBox(
+      height: dynamicHeight(40, context),
+      width: double.infinity,
+      child: NanyangButton(
+        backgroundColor: ColorTemplate.vistaBlue,
+        onPressed: () => context.read<RequestViewModel>().detail(model),
+        child: Icon(Icons.remove_red_eye, color: ColorTemplate.periwinkle, size: dynamicFontSize(20, context)),
       ),
     );
   } else {
     return Row(
       children: [
         Expanded(
-          child: FilledButton(
-            style: ButtonStyle(
-              padding: WidgetStateProperty.all<EdgeInsetsGeometry>(dynamicPaddingAll(8, context)),
-              backgroundColor: WidgetStateProperty.all<Color>(ColorTemplate.vistaBlue),
-              shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    bottomLeft: Radius.circular(8),
-                  ),
-                ),
-              ),
-            ),
-            onPressed: () => context.read<RequestViewModel>().detail(model),
-            child: const Icon(
-              Icons.remove_red_eye,
-              color: ColorTemplate.periwinkle,
+          child: SizedBox(
+            height: dynamicHeight(40, context),
+            child: NanyangButton(
+              backgroundColor: ColorTemplate.vistaBlue,
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), bottomLeft: Radius.circular(8)),
+              onPressed: () => context.read<RequestViewModel>().detail(model),
+              child: Icon(Icons.remove_red_eye, size: dynamicFontSize(20, context), color: ColorTemplate.periwinkle),
             ),
           ),
         ),
         Expanded(
-          child: FilledButton(
-            style: ButtonStyle(
-              padding: WidgetStateProperty.all<EdgeInsetsGeometry>(dynamicPaddingAll(8, context)),
-              backgroundColor: WidgetStateProperty.all<Color>(Colors.red),
-              shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(8),
-                    bottomRight: Radius.circular(8),
-                  ),
-                ),
-              ),
-            ),
-            onPressed: () async {
-              await showDialog(
-                context: context,
-                builder: (context) {
-                  return StatefulBuilder(builder: (context, StateSetter setState) {
-                    return AlertDialog(
-                      backgroundColor: Colors.white,
-                      title: const Text('Hapus Perizinan'),
-                      content: const Text('Apakah Anda yakin ingin menghapus perizinan ini?'),
-                      actions: [
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
-                            foregroundColor: WidgetStateProperty.all<Color>(Colors.red),
-                            overlayColor: WidgetStateProperty.all<Color>(Colors.red.withOpacity(0.1)),
-                          ),
-                          child: const Text('Batal'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () async {
-                            await context.read<RequestViewModel>().delete(model.id).then((_) {
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(content: Text('Perizinan berhasil dihapus')));
-                              Navigator.pop(context);
-                            });
-                          },
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all<Color>(Colors.red),
-                            foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
-                            overlayColor: WidgetStateProperty.all<Color>(Colors.red.withOpacity(0.1)),
-                          ),
-                          child: const Text('Hapus'),
-                        ),
-                      ],
+          child: SizedBox(
+            height: dynamicHeight(40, context),
+            child: NanyangButton(
+              backgroundColor: Colors.red,
+              borderRadius: const BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8)),
+              onPressed: () async {
+                await showDialog(
+                  context: context,
+                  builder: (context) {
+                    return StatefulBuilder(
+                      builder: (context, StateSetter setState) {
+                        return AlertDialog(
+                          backgroundColor: Colors.white,
+                          title: const Text('Hapus Perizinan'),
+                          content: const Text('Apakah Anda yakin ingin menghapus perizinan ini?'),
+                          actions: [
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: ButtonStyle(
+                                backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
+                                foregroundColor: WidgetStateProperty.all<Color>(Colors.red),
+                                overlayColor: WidgetStateProperty.all<Color>(Colors.red.withOpacity(0.1)),
+                              ),
+                              child: const Text('Batal'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () async {
+                                await context.read<RequestViewModel>().delete(model.id).then((_) {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(const SnackBar(content: Text('Perizinan berhasil dihapus')));
+                                  Navigator.pop(context);
+                                });
+                              },
+                              style: ButtonStyle(
+                                backgroundColor: WidgetStateProperty.all<Color>(Colors.red),
+                                foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
+                                overlayColor: WidgetStateProperty.all<Color>(Colors.red.withOpacity(0.1)),
+                              ),
+                              child: const Text('Hapus'),
+                            ),
+                          ],
+                        );
+                      },
                     );
-                  });
-                },
-              );
-            },
-            child: const Icon(
-              Icons.delete,
-              color: Colors.white,
+                  },
+                );
+              },
+              child: Icon(
+                Icons.delete,
+                color: Colors.white,
+                size: dynamicFontSize(20, context),
+              ),
             ),
           ),
         ),

@@ -54,7 +54,7 @@ class _FormPickerFieldState extends State<FormPickerField> {
               text: TextSpan(
                 text: widget.title,
                 style: TextStyle(
-                  fontSize: dynamicFontSize(24, context),
+                  fontSize: dynamicFontSize(20, context),
                   fontWeight: FontWeight.w700,
                   color: widget.titleColor,
                 ),
@@ -63,7 +63,7 @@ class _FormPickerFieldState extends State<FormPickerField> {
                   TextSpan(
                     text: ' *',
                     style: TextStyle(
-                      fontSize: dynamicFontSize(24, context),
+                      fontSize: dynamicFontSize(10, context),
                       fontWeight: FontWeight.w700,
                       color: Colors.red,
                     ),
@@ -82,7 +82,7 @@ class _FormPickerFieldState extends State<FormPickerField> {
               validator: widget.isRequired ? widget.validator : null,
               readOnly: true,
               style: TextStyle(
-                fontSize: dynamicFontSize(20, context),
+                fontSize: dynamicFontSize(16, context),
                 color: widget.isDisabled ? Colors.grey : ColorTemplate.darkVistaBlue,
                 fontWeight: FontWeight.w600,
               ),
@@ -113,7 +113,7 @@ OutlineInputBorder _outlineInputBorder(BuildContext context) {
     borderSide: const BorderSide(
       color: Colors.transparent,
     ),
-    borderRadius: BorderRadius.circular(25.0), // Set a consistent border radius
+    borderRadius: BorderRadius.circular(8.0), // Set a consistent border radius
   );
 }
 
@@ -122,6 +122,6 @@ OutlineInputBorder _errorOutlineInputBorder(BuildContext context) {
     borderSide: const BorderSide(
       color: Colors.red, // Customize error border color as needed
     ),
-    borderRadius: BorderRadius.circular(25.0), // Set a consistent border radius
+    borderRadius: BorderRadius.circular(8.0), // Set a consistent border radius
   );
 }

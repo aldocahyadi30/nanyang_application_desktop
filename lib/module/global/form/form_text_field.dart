@@ -62,7 +62,7 @@ class _FormTextFieldState extends State<FormTextField> {
                     text: TextSpan(
                       text: widget.title,
                       style: TextStyle(
-                        fontSize: dynamicFontSize(24, context),
+                        fontSize: dynamicFontSize(20, context),
                         fontWeight: FontWeight.w700,
                         color: widget.titleColor,
                       ),
@@ -71,7 +71,7 @@ class _FormTextFieldState extends State<FormTextField> {
                               TextSpan(
                                 text: ' *',
                                 style: TextStyle(
-                                  fontSize: dynamicFontSize(24, context),
+                                  fontSize: dynamicFontSize(20, context),
                                   fontWeight: FontWeight.w700,
                                   color: Colors.red,
                                 ),
@@ -95,14 +95,14 @@ class _FormTextFieldState extends State<FormTextField> {
               inputFormatters: widget.inputFormatters,
               obscureText: widget.isObscure,
               style: TextStyle(
-                fontSize: dynamicFontSize(20, context),
+                fontSize: dynamicFontSize(16, context),
                 color: widget.isReadOnly ? Colors.grey[600] : widget.textColor,
                 fontWeight: FontWeight.w600,
               ),
               decoration: InputDecoration(
                 hintText: widget.hintText,
                 hintStyle: TextStyle(
-                  fontSize: dynamicFontSize(20, context),
+                  fontSize: dynamicFontSize(16, context),
                   color: Colors.grey[400],
                 ),
                 contentPadding: dynamicPaddingSymmetric(16, 24, context),
@@ -129,7 +129,7 @@ OutlineInputBorder _outlineInputBorder(BuildContext context) {
     borderSide: const BorderSide(
       color: Colors.transparent,
     ),
-    borderRadius: BorderRadius.circular(25.0), // Set a consistent border radius
+    borderRadius: BorderRadius.circular(8.0), // Set a consistent border radius
   );
 }
 
@@ -138,6 +138,6 @@ OutlineInputBorder _errorOutlineInputBorder(BuildContext context) {
     borderSide: const BorderSide(
       color: Colors.red, // Customize error border color as needed
     ),
-    borderRadius: BorderRadius.circular(25.0), // Set a consistent border radius
+    borderRadius: BorderRadius.circular(8.0), // Set a consistent border radius
   );
 }

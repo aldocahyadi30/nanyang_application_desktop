@@ -33,7 +33,7 @@ class _ManagementUserFormState extends State<ManagementUserForm> {
   @override
   void initState() {
     super.initState();
-    _user = context.read<ConfigurationViewModel>().user;
+    _user = context.read<AuthViewModel>().user;
     _authViewModel = context.read<AuthViewModel>();
     if (context.read<UserViewModel>().selectedUser.id == '') {
       _model = context.read<UserViewModel>().selectedUser;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nanyang_application_desktop/color_template.dart';
+import 'package:nanyang_application_desktop/helper.dart';
 
 class NanyangTimePicker extends StatefulWidget {
   final Color color;
@@ -50,9 +51,14 @@ class _DatePickerState extends State<NanyangTimePicker> {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: widget.isDisabled ? null :() => _selectTime(context),
-      icon: Icon(Icons.access_time, color: widget.isDisabled ? Colors.grey : widget.color),
+    return SizedBox(
+      height: dynamicHeight(64, context),
+      width: dynamicWidth(64, context),
+      child: IconButton(
+
+        onPressed: widget.isDisabled ? null :() => _selectTime(context),
+        icon: Icon(Icons.access_time, color: widget.isDisabled ? Colors.grey : widget.color),
+      ),
     );
   }
 }

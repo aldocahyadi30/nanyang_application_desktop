@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:nanyang_application_desktop/color_template.dart';
 import 'package:nanyang_application_desktop/helper.dart';
 import 'package:nanyang_application_desktop/model/employee.dart';
 import 'package:nanyang_application_desktop/model/position.dart';
+import 'package:nanyang_application_desktop/module/global/form/form_button.dart';
 import 'package:nanyang_application_desktop/module/global/form/form_dropdown.dart';
 import 'package:nanyang_application_desktop/module/global/form/form_picker_field.dart';
 import 'package:nanyang_application_desktop/module/global/form/form_text_field.dart';
+import 'package:nanyang_application_desktop/module/global/other/nanyang_button.dart';
+import 'package:nanyang_application_desktop/module/global/other/nanyang_card.dart';
 import 'package:nanyang_application_desktop/module/global/picker/nanyang_date_picker.dart';
+import 'package:nanyang_application_desktop/viewmodel/auth_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/configuration_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/employee_viewmodel.dart';
 import 'package:provider/provider.dart';
@@ -30,6 +35,7 @@ class _ManagementEmployeeFormState extends State<ManagementEmployeeForm> {
   final TextEditingController _attendanceIDController = TextEditingController();
   final TextEditingController _entryDateController = TextEditingController();
   bool isEdit = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -66,147 +72,192 @@ class _ManagementEmployeeFormState extends State<ManagementEmployeeForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          FormTextField(
-            title: 'Nama Karyawan',
-            controller: _nameController,
-            onChanged: (value) {
-              setState(() {
-                _model.name = value!;
-              });
-            },
+    return NanyangCard(
+      title: Text(
+        'Form Karyawan',
+        style: TextStyle(fontSize: dynamicFontSize(24, context), fontWeight: FontWeight.w800),
+      ),
+      actions: [
+        NanyangButton(
+          size: ButtonSize.medium,
+          onPressed: () => _employeeViewModel.index(),
+          backgroundColor: Colors.grey,
+          icon: Icon(
+            Icons.chevron_left,
+            color: Colors.white,
+            size: dynamicFontSize(24, context),
           ),
-          SizedBox(height: dynamicHeight(24, context)),
-          Selector<ConfigurationViewModel, List<PositionModel>>(
-            selector: (context, viewmodel) => viewmodel.position,
-            builder: (context, position, child) {
-              return FormDropdown<int>(
-                title: 'Posisi',
-                value: isEdit ? _model.position.id : null,
-                items: position.map((e) => DropdownMenuItem(value: e.id, child: Text(e.name))).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _model.position = position.firstWhere((element) => element.id == value);
-                  });
-                },
-              );
-            },
+          child: Text(
+            'Kembali',
+            style: TextStyle(color: Colors.white, fontSize: dynamicFontSize(16, context)),
           ),
-          SizedBox(height: dynamicHeight(24, context)),
-          if (!isEdit)
-            Column(
-              children: [
-                FormPickerField(
-                    title: 'Tanggal Masuk',
-                    picker: NanyangDatePicker(
-                      selectedDate: _model.entryDate,
-                      controller: _entryDateController,
-                      onDatePicked: (date) {
-                        _entryDateController.text = parseDateToStringFormatted(date);
-                        _model.entryDate = date;
-                      },
-                    ),
-                    controller: _entryDateController),
-                SizedBox(height: dynamicHeight(24, context)),
-              ],
+        ),
+      ],
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            FormTextField(
+              title: 'Nama Karyawan',
+              controller: _nameController,
+              onChanged: (value) {
+                setState(() {
+                  _model.name = value!;
+                });
+              },
             ),
-          FormTextField(
-            title: 'Nomor Telepon',
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            onChanged: (value) {
-              if (value!.isNotEmpty) {
-                _model.phoneNumber = value;
-              }
-            },
-          ),
-          if (isEdit)
-            Column(
-              children: [
-                FormTextField(
-                  title: 'Alamat',
-                  controller: _addressController,
-                  isRequired: false,
-                  onChanged: (value) {
-                    if (value!.isNotEmpty) {
-                      _model.address = value;
-                    }
-                  },
-                ),
-                SizedBox(height: dynamicHeight(16, context)),
-                FormTextField(
-                  title: 'Tempat Lahir',
-                  controller: _birthplaceController,
-                  isRequired: false,
-                  onChanged: (value) {
-                    if (value!.isNotEmpty) {
-                      _model.birthPlace = value;
-                    }
-                  },
-                ),
-                SizedBox(height: dynamicHeight(16, context)),
-                FormPickerField(
-                    title: 'Tanggal Lahir',
-                    isRequired: false,
-                    picker: NanyangDatePicker(
-                      selectedDate: _model.birthDate,
-                      controller: _birthdateController,
-                      onDatePicked: (date) {
-                        _birthdateController.text = parseDateToStringFormatted(date);
-                        _model.birthDate = date;
-                        _model.age = DateTime.now().year - date.year;
-                      },
-                    ),
-                    controller: _birthdateController),
-                SizedBox(height: dynamicHeight(16, context)),
-                FormDropdown(
-                  title: 'Jenis Kelamin',
-                  isRequired: false,
-                  value: _model.gender,
-                  items: const [
-                    DropdownMenuItem(value: 'Pria', child: Text('Pria')),
-                    DropdownMenuItem(value: 'Wanita', child: Text('Wanita'))
-                  ],
+            SizedBox(height: dynamicHeight(24, context)),
+            Selector<ConfigurationViewModel, List<PositionModel>>(
+              selector: (context, viewmodel) => viewmodel.position,
+              builder: (context, position, child) {
+                return FormDropdown<int>(
+                  title: 'Posisi',
+                  value: isEdit ? _model.position.id : null,
+                  items: position.map((e) => DropdownMenuItem(value: e.id, child: Text(e.name))).toList(),
                   onChanged: (value) {
                     setState(() {
-                      _model.gender = value.toString();
+                      _model.position = position.firstWhere((element) => element.id == value);
                     });
                   },
-                ),
-                SizedBox(height: dynamicHeight(16, context)),
-              ],
+                );
+              },
             ),
-          if (context.read<ConfigurationViewModel>().user.level == 3)
-            Column(
-              children: [
-                SizedBox(height: dynamicHeight(24, context),),
-                FormTextField(
-                  title: 'Gaji',
-                  controller: _salaryController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [formatInputCurrencty()],
-                  onChanged: (value) {
-                    if (value!.isNotEmpty) _model.salary = removeCurrencyFormat(value);
-                  },
-                ),
-              ],
+            SizedBox(height: dynamicHeight(24, context)),
+            if (!isEdit)
+              Column(
+                children: [
+                  FormPickerField(
+                      title: 'Tanggal Masuk',
+                      picker: NanyangDatePicker(
+                        selectedDate: _model.entryDate,
+                        controller: _entryDateController,
+                        onDatePicked: (date) {
+                          _entryDateController.text = parseDateToStringFormatted(date);
+                          _model.entryDate = date;
+                        },
+                      ),
+                      controller: _entryDateController),
+                  SizedBox(height: dynamicHeight(24, context)),
+                ],
+              ),
+            FormTextField(
+              title: 'Nomor Telepon',
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              onChanged: (value) {
+                if (value!.isNotEmpty) {
+                  _model.phoneNumber = value;
+                }
+              },
             ),
-          SizedBox(height: dynamicHeight(24, context)),
-          FormTextField(
-            title: 'ID Mesin Absensi',
-            controller: _attendanceIDController,
-            keyboardType: TextInputType.number,
-            onChanged: (value) {
-              if (value!.isNotEmpty) {
-                _model.attendanceMachineID = int.parse(value);
-              }
-            },
-          ),
-          SizedBox(height: dynamicHeight(32, context)),
-        ],
+            if (isEdit)
+              Column(
+                children: [
+                  FormTextField(
+                    title: 'Alamat',
+                    controller: _addressController,
+                    isRequired: false,
+                    onChanged: (value) {
+                      if (value!.isNotEmpty) {
+                        _model.address = value;
+                      }
+                    },
+                  ),
+                  SizedBox(height: dynamicHeight(16, context)),
+                  FormTextField(
+                    title: 'Tempat Lahir',
+                    controller: _birthplaceController,
+                    isRequired: false,
+                    onChanged: (value) {
+                      if (value!.isNotEmpty) {
+                        _model.birthPlace = value;
+                      }
+                    },
+                  ),
+                  SizedBox(height: dynamicHeight(16, context)),
+                  FormPickerField(
+                      title: 'Tanggal Lahir',
+                      isRequired: false,
+                      picker: NanyangDatePicker(
+                        selectedDate: _model.birthDate,
+                        controller: _birthdateController,
+                        onDatePicked: (date) {
+                          _birthdateController.text = parseDateToStringFormatted(date);
+                          _model.birthDate = date;
+                          _model.age = DateTime.now().year - date.year;
+                        },
+                      ),
+                      controller: _birthdateController),
+                  SizedBox(height: dynamicHeight(16, context)),
+                  FormDropdown(
+                    title: 'Jenis Kelamin',
+                    isRequired: false,
+                    value: _model.gender,
+                    items: const [
+                      DropdownMenuItem(value: 'Pria', child: Text('Pria')),
+                      DropdownMenuItem(value: 'Wanita', child: Text('Wanita'))
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _model.gender = value.toString();
+                      });
+                    },
+                  ),
+                  SizedBox(height: dynamicHeight(16, context)),
+                ],
+              ),
+            if (context.read<AuthViewModel>().user.level == 3)
+              Column(
+                children: [
+                  SizedBox(
+                    height: dynamicHeight(24, context),
+                  ),
+                  FormTextField(
+                    title: 'Gaji',
+                    controller: _salaryController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [formatInputCurrencty()],
+                    onChanged: (value) {
+                      if (value!.isNotEmpty) _model.salary = removeCurrencyFormat(value);
+                    },
+                  ),
+                ],
+              ),
+            SizedBox(height: dynamicHeight(24, context)),
+            FormTextField(
+              title: 'ID Mesin Absensi',
+              controller: _attendanceIDController,
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                if (value!.isNotEmpty) {
+                  _model.attendanceMachineID = int.parse(value);
+                }
+              },
+            ),
+            SizedBox(height: dynamicHeight(32, context)),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FormButton(
+                text: 'Simpan Karyawan',
+                isLoading: _isLoading,
+                backgroundColor: ColorTemplate.lightVistaBlue,
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    setState(() {
+                      _isLoading = true;
+                    });
+
+                    // if (_isLabor) {
+                    //   _viewmodel.storeLabor(_model);
+                    // } else {
+                    //   _viewmodel.storeWorker(_model);
+                    // }
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,33 +1,52 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:nanyang_application_desktop/main.dart';
 import 'package:nanyang_application_desktop/model/announcement.dart';
 import 'package:nanyang_application_desktop/model/announcement_category.dart';
-import 'package:nanyang_application_desktop/provider/toast_provider.dart';
 import 'package:nanyang_application_desktop/service/announcement_service.dart';
 import 'package:nanyang_application_desktop/service/navigation_service.dart';
+import 'package:nanyang_application_desktop/viewmodel/dashboard_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AnnouncementViewModel extends ChangeNotifier {
   final AnnouncementService _announcementService;
-  final ToastProvider _toastProvider = Provider.of<ToastProvider>(navigatorKey.currentContext!, listen: false);
-  final NavigationService _navigationService = Provider.of<NavigationService>(navigatorKey.currentContext!, listen: false);
+  final NavigationService _navigationService =
+      Provider.of<NavigationService>(navigatorKey.currentContext!, listen: false);
   List<AnnouncementModel> _announcement = [];
   List<AnnouncementModel> _announcementDashboard = [];
   List<AnnouncementCategoryModel> _announcementCategory = [];
   AnnouncementModel _selectedAnnouncement = AnnouncementModel.empty();
   List<int> selectedCategory = [];
+  int currentPage = 0;
+  int _filterCategory = 0;
 
-  AnnouncementViewModel({required AnnouncementService announcementService}) : _announcementService = announcementService;
+  AnnouncementViewModel({required AnnouncementService announcementService})
+      : _announcementService = announcementService;
 
   get announcement => _announcement;
+
   get announcementDashboard => _announcementDashboard;
+
   get announcementCategory => _announcementCategory;
+
   AnnouncementModel get selectedAnnouncement => _selectedAnnouncement;
+
+  int get currentPageIndex => currentPage;
+
+  int get filterCategory => _filterCategory;
 
   set selectedAnnouncement(AnnouncementModel model) {
     _selectedAnnouncement = model;
+    notifyListeners();
+  }
+
+  set currentPageIndex(int index) {
+    currentPage = index;
+    notifyListeners();
+  }
+
+  set filterCategory(int category) {
+    _filterCategory = category;
     notifyListeners();
   }
 
@@ -43,7 +62,8 @@ class AnnouncementViewModel extends ChangeNotifier {
       } else {
         debugPrint('Announcement get dashboard error: ${e.toString()}');
       }
-      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
     }
   }
 
@@ -64,7 +84,8 @@ class AnnouncementViewModel extends ChangeNotifier {
       } else {
         debugPrint('Announcement get error: ${e.toString()}');
       }
-      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
     }
   }
 
@@ -80,18 +101,16 @@ class AnnouncementViewModel extends ChangeNotifier {
       } else {
         debugPrint('Announcement get category error: ${e.toString()}');
       }
-      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
     }
   }
-
-
-
-
 
   Future<void> storeAnnouncementCategory(String title, String color) async {
     try {
       await _announcementService.storeAnnouncementCategory(title, color);
-      _toastProvider.showToast('Berhasil menambahkan kategori pengumuman!', 'success');
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Berhasil menambahkan kategori pengumuman!'), backgroundColor: Colors.green));
 
       getAnnouncementCategory();
     } catch (e) {
@@ -100,14 +119,16 @@ class AnnouncementViewModel extends ChangeNotifier {
       } else {
         debugPrint('Announcement store category error: ${e.toString()}');
       }
-      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
     }
   }
 
   Future<void> updateAnnouncementCategory(AnnouncementCategoryModel model, String title, String color) async {
     try {
       await _announcementService.updateAnnouncementCategory(model.id, title, color);
-      _toastProvider.showToast('Berhasil mengubah kategori pengumuman!', 'success');
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Berhasil mengubah kategori pengumuman!'), backgroundColor: Colors.green));
 
       getAnnouncementCategory();
     } catch (e) {
@@ -116,25 +137,29 @@ class AnnouncementViewModel extends ChangeNotifier {
       } else {
         debugPrint('Announcement update catgeory error: ${e.toString()}');
       }
-      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
     }
   }
 
-  // Future<void> index()async{
-  //   await getAnnouncement().then((_){
-  //     _navigationService.navigateTo(const AnnouncementScreen());
-  //   });
-  // }
-  //
-  // void create(){
-  //   _selectedAnnouncement = AnnouncementModel.empty();
-  //   _navigationService.navigateTo(const AnnouncementFormScreen());
-  // }
+  Future<void> index() async {
+    currentPageIndex = 0;
+    filterCategory = 0;
+    await getAnnouncement();
+    navigatorKey.currentContext!.read<DashboardViewmodel>().title = 'Pengumuman';
+  }
+
+  Future<void> create() async {
+    currentPageIndex = 1;
+    _selectedAnnouncement = AnnouncementModel.empty();
+    await navigatorKey.currentContext!.read<AnnouncementViewModel>().getAnnouncementCategory();
+  }
 
   Future<void> store(AnnouncementModel model) async {
     try {
       await _announcementService.storeAnnouncement(model).then((_) {
-        _toastProvider.showToast('Berhasil menambahkan pengumuman!', 'success');
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            const SnackBar(content: Text('Berhasil menambahkan pengumuman!'), backgroundColor: Colors.green));
         getAnnouncement();
         _navigationService.goBack();
       });
@@ -144,24 +169,27 @@ class AnnouncementViewModel extends ChangeNotifier {
       } else {
         debugPrint('Announcement store error: ${e.toString()}');
       }
-      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
     }
   }
 
-  // void detail(AnnouncementModel model){
-  //   _selectedAnnouncement = model;
-  //   _navigationService.navigateTo(const AnnouncementDetailScreen());
-  // }
-  //
-  // void edit(AnnouncementModel model){
-  //   _selectedAnnouncement = model;
-  //   _navigationService.navigateTo(const AnnouncementFormScreen());
-  // }
+  void detail(AnnouncementModel model) {
+    currentPageIndex = 2;
+    _selectedAnnouncement = model;
+  }
+
+  Future<void> edit(AnnouncementModel model) async {
+    currentPageIndex = 1;
+    _selectedAnnouncement = model;
+    await navigatorKey.currentContext!.read<AnnouncementViewModel>().getAnnouncementCategory();
+  }
 
   Future<void> update(AnnouncementModel model) async {
     try {
       await _announcementService.updateAnnouncement(model).then((_) {
-        _toastProvider.showToast('Berhasil update pengumuman!', 'success');
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            const SnackBar(content: Text('Berhasil mengubah pengumuman!'), backgroundColor: Colors.green));
         getAnnouncement();
         _navigationService.goBack();
       });
@@ -171,16 +199,15 @@ class AnnouncementViewModel extends ChangeNotifier {
       } else {
         debugPrint('Announcement store error: ${e.toString()}');
       }
-      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
     }
   }
 
-  Future<void> delete() async{
-    await _announcementService.deleteAnnouncement(_selectedAnnouncement.id).then((_) {
-      _toastProvider.showToast('Berhasil menghapus pengumuman!', 'success');
-      getAnnouncement();
-      _navigationService.goBack();
-    });
+  Future<void> delete(int id) async {
+    await _announcementService.deleteAnnouncement(id);
+    ScaffoldMessenger.of(navigatorKey.currentContext!)
+        .showSnackBar(const SnackBar(content: Text('Berhasil menghapus pewngumuman!'), backgroundColor: Colors.green));
+    await getAnnouncement();
   }
-
 }

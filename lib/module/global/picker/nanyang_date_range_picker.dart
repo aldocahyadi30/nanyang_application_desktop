@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:nanyang_application_desktop/color_template.dart';
-import 'package:nanyang_application_desktop/provider/date_provider.dart';
-import 'package:nanyang_application_desktop/viewmodel/attendance_viewmodel.dart';
-import 'package:nanyang_application_desktop/viewmodel/date_viewmodel.dart';
-import 'package:nanyang_application_desktop/viewmodel/request_viewmodel.dart';
-import 'package:provider/provider.dart';
 
 class NanyangDateRangePicker extends StatefulWidget {
   final TextEditingController? controller;

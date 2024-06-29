@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:nanyang_application_desktop/main.dart';
 import 'package:nanyang_application_desktop/model/request.dart';
-import 'package:nanyang_application_desktop/provider/toast_provider.dart';
-import 'package:nanyang_application_desktop/service/navigation_service.dart';
+import 'package:nanyang_application_desktop/model/user.dart';
 import 'package:nanyang_application_desktop/service/request_service.dart';
-import 'package:nanyang_application_desktop/viewmodel/configuration_viewmodel.dart';
+import 'package:nanyang_application_desktop/viewmodel/auth_viewmodel.dart';
+import 'package:nanyang_application_desktop/viewmodel/dashboard_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RequestViewModel extends ChangeNotifier {
   final RequestService _requestService;
-  final NavigationService _navigationService =
-      Provider.of<NavigationService>(navigatorKey.currentContext!, listen: false);
-  final ToastProvider _toastProvider = Provider.of<ToastProvider>(navigatorKey.currentContext!, listen: false);
-  final ConfigurationViewModel _configViewModel =
-      Provider.of<ConfigurationViewModel>(navigatorKey.currentContext!, listen: false);
   List<RequestModel> _request = [];
   List<RequestModel> _requestDashboard = [];
   RequestModel _selectedRequest = RequestModel.empty();
@@ -86,9 +81,10 @@ class RequestViewModel extends ChangeNotifier {
 
   Future<void> getDashboardRequest() async {
     try {
+      UserModel user = navigatorKey.currentContext!.read<AuthViewModel>().user;
       List<Map<String, dynamic>> data;
-      data = await _requestService.getDashboardRequest(_configViewModel.user.level,
-          employeeID: _configViewModel.user.isAdmin ? null : _configViewModel.user.employee.id);
+      data = await _requestService.getDashboardRequest(user.level,
+          employeeID: user.isAdmin ? null : user.employee.id);
 
       _requestDashboard = RequestModel.fromSupabaseList(data);
       notifyListeners();
@@ -98,15 +94,16 @@ class RequestViewModel extends ChangeNotifier {
       } else {
         debugPrint('Request get dashboard error: ${e.toString()}');
       }
-      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
-    }
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));    }
   }
 
   Future<void> getRequest() async {
     try {
+      UserModel user = navigatorKey.currentContext!.read<AuthViewModel>().user;
       List<Map<String, dynamic>> data;
       data = await _requestService.getListRequest(
-          employeeID: _configViewModel.user.isAdmin ? null : _configViewModel.user.employee.id);
+          employeeID: user.isAdmin ? null : user.employee.id);
       _request = RequestModel.fromSupabaseList(data);
       notifyListeners();
     } catch (e) {
@@ -115,28 +112,29 @@ class RequestViewModel extends ChangeNotifier {
       } else {
         debugPrint('Request get list error: ${e.toString()}');
       }
-      _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
-    }
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));    }
   }
 
   Future<void> response(String type) async {
     try {
+      UserModel user = navigatorKey.currentContext!.read<AuthViewModel>().user;
       if (type == 'approve') {
-        selectedRequest.approver = _configViewModel.user.employee;
+        selectedRequest.approver = user.employee;
         await _requestService.approve(selectedRequest);
         ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(const SnackBar(
           content: Text('Permintaan berhasil disetujui!'),
           backgroundColor: Colors.green,
         ));
       } else {
-        selectedRequest.rejecter = _configViewModel.user.employee;
+        selectedRequest.rejecter = user.employee;
         await _requestService.reject(selectedRequest);
         ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(const SnackBar(
           content: Text('Permintaan berhasil ditolak!'),
           backgroundColor: Colors.red,
         ));
       }
-
+      // _dashboardViewModel.title = 'Perizinan';
       await index();
     } catch (e) {
       if (e is PostgrestException) {
@@ -170,17 +168,12 @@ class RequestViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // void edit(RequestModel model) {
-  //
-  //   _selectedRequest = model;
-  //   _navigationService.navigateTo(RequestFormScreen(type: model.type));
-  // }
-
   Future<void> delete(int id) async {
     try {
       await _requestService.delete(id).then((_) {
         getRequest();
-        _toastProvider.showToast('Permintaan berhasil dihapus!', 'success');
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            const SnackBar(content: Text('Perizinan berhasil dihapus!'), backgroundColor: Colors.green));
       });
     } catch (e) {
       if (e is PostgrestException) {
@@ -198,6 +191,7 @@ class RequestViewModel extends ChangeNotifier {
   Future<void> index() async {
     currentPageIndex = 0;
     addFilter();
+    navigatorKey.currentContext!.read<DashboardViewmodel>().title = 'Perizinan';
     await getRequest();
   }
 

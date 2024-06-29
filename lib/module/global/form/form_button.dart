@@ -32,7 +32,6 @@ class _FormButtonState extends State<FormButton> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: double.infinity,
       height: dynamicHeight(widget.buttonHeight, context),
       child: ElevatedButton(
           onPressed: widget.onPressed,
@@ -40,7 +39,7 @@ class _FormButtonState extends State<FormButton> {
             backgroundColor: widget.backgroundColor,
             foregroundColor: widget.foregroundColor,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.0),
+              borderRadius: BorderRadius.circular(8.0),
             ),
             elevation: widget.elevation,
           ),

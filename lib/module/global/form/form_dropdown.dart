@@ -53,7 +53,7 @@ class _FormDropdownState extends State<FormDropdown> {
               text: TextSpan(
                 text: widget.title,
                 style: TextStyle(
-                  fontSize: dynamicFontSize(24, context),
+                  fontSize: dynamicFontSize(20, context),
                   fontWeight: FontWeight.w700,
                   color: widget.titleColor,
                 ),
@@ -62,7 +62,7 @@ class _FormDropdownState extends State<FormDropdown> {
                   TextSpan(
                     text: ' *',
                     style: TextStyle(
-                      fontSize: dynamicFontSize(24, context),
+                      fontSize: dynamicFontSize(20, context),
                       fontWeight: FontWeight.w700,
                       color: Colors.red,
                     ),
@@ -113,7 +113,7 @@ OutlineInputBorder _outlineInputBorder(BuildContext context) {
     borderSide: const BorderSide(
       color: Colors.transparent,
     ),
-    borderRadius: BorderRadius.circular(25.0), // Set a consistent border radius
+    borderRadius: BorderRadius.circular(8.0), // Set a consistent border radius
   );
 }
 
@@ -122,6 +122,6 @@ OutlineInputBorder _errorOutlineInputBorder(BuildContext context) {
     borderSide: const BorderSide(
       color: Colors.red, // Customize error border color as needed
     ),
-    borderRadius: BorderRadius.circular(25.0), // Set a consistent border radius
+    borderRadius: BorderRadius.circular(8.0), // Set a consistent border radius
   );
 }

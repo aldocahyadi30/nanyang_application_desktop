@@ -3,6 +3,7 @@ import 'package:nanyang_application_desktop/main.dart';
 import 'package:nanyang_application_desktop/model/employee.dart';
 import 'package:nanyang_application_desktop/service/employee_service.dart';
 import 'package:nanyang_application_desktop/viewmodel/configuration_viewmodel.dart';
+import 'package:nanyang_application_desktop/viewmodel/dashboard_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -13,14 +14,27 @@ class EmployeeViewModel extends ChangeNotifier {
   List<EmployeeModel> _employee = [];
   EmployeeModel _selectedEmployee = EmployeeModel.empty();
   int currentPage = 0;
+  int _filterType = 0;
 
   EmployeeViewModel({required EmployeeService employeeService}) : _employeeService = employeeService;
 
   get employee => _employee;
 
+  get filteredEmployee {
+    if (_filterType == 0) {
+      return _employee;
+    } else if (_filterType == 1) {
+      return _employee.where((element) => element.position.type == 1).toList();
+    } else {
+      return _employee.where((element) => element.position.type == 2).toList();
+    }
+  }
+
   EmployeeModel get selectedEmployee => _selectedEmployee;
 
   int get currentPageIndex => currentPage;
+
+  int get filterType => _filterType;
 
   set selectedEmployee(EmployeeModel employee) {
     _selectedEmployee = employee;
@@ -29,6 +43,11 @@ class EmployeeViewModel extends ChangeNotifier {
 
   set currentPageIndex(int index) {
     currentPage = index;
+    notifyListeners();
+  }
+
+  set filterType(int type) {
+    _filterType = type;
     notifyListeners();
   }
 
@@ -120,6 +139,8 @@ class EmployeeViewModel extends ChangeNotifier {
 
   Future<void> index() async {
     currentPageIndex = 0;
+    _filterType = 0;
+    navigatorKey.currentContext!.read<DashboardViewmodel>().title = 'Karyawan';
     await getEmployee();
   }
 

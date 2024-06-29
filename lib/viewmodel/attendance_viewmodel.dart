@@ -1,29 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:nanyang_application_desktop/helper.dart';
 import 'package:nanyang_application_desktop/main.dart';
-import 'package:nanyang_application_desktop/model/attendance.dart';
 import 'package:nanyang_application_desktop/model/attendance_admin.dart';
-import 'package:nanyang_application_desktop/model/attendance_detail.dart';
 import 'package:nanyang_application_desktop/model/attendance_user.dart';
-import 'package:nanyang_application_desktop/provider/date_provider.dart';
-import 'package:nanyang_application_desktop/provider/toast_provider.dart';
+import 'package:nanyang_application_desktop/model/user.dart';
 import 'package:nanyang_application_desktop/service/attendance_service.dart';
-import 'package:nanyang_application_desktop/service/navigation_service.dart';
-import 'package:nanyang_application_desktop/viewmodel/configuration_viewmodel.dart';
+import 'package:nanyang_application_desktop/viewmodel/auth_viewmodel.dart';
+import 'package:nanyang_application_desktop/viewmodel/dashboard_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AttendanceViewModel extends ChangeNotifier {
   final AttendanceService _attendanceService;
-  final ToastProvider _toastProvider = Provider.of<ToastProvider>(navigatorKey.currentContext!, listen: false);
-  final DateProvider _dateProvider = Provider.of<DateProvider>(navigatorKey.currentContext!, listen: false);
-  final ConfigurationViewModel _configViewModel =
-      Provider.of<ConfigurationViewModel>(navigatorKey.currentContext!, listen: false);
-  final NavigationService _navigationService =
-      Provider.of<NavigationService>(navigatorKey.currentContext!, listen: false);
-  int workerCount = 0;
-  int laborCount = 0;
-  int currentPage = 0;
+  int _workerCount = 0;
+  int _laborCount = 0;
+  int _currentPage = 0;
+  int _filterType = 0;
   List<AttendanceAdminModel> adminAttendance = [];
   List<AttendanceUserModel> userAttendance = [];
   AttendanceAdminModel _selectedAtt = AttendanceAdminModel.empty();
@@ -48,10 +40,16 @@ class AttendanceViewModel extends ChangeNotifier {
 
   get selectedUserDate => _selectedDateUser;
 
-  int get currentPageIndex => currentPage;
+  int get workerCount => _workerCount;
+
+  int get laborCount => _laborCount;
+
+  int get currentPageIndex => _currentPage;
+
+  int get filterType => _filterType;
 
   set currentPageIndex(int index) {
-    currentPage = index;
+    _currentPage = index;
     notifyListeners();
   }
 
@@ -70,6 +68,21 @@ class AttendanceViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  set workerCount(int count) {
+    _workerCount = count;
+    notifyListeners();
+  }
+
+  set laborCount(int count) {
+    _laborCount = count;
+    notifyListeners();
+  }
+
+  set filterType(int type) {
+    _filterType = type;
+    notifyListeners();
+  }
+
   Future<void> getAdminAttendance() async {
     try {
       List<Map<String, dynamic>>? data;
@@ -81,19 +94,20 @@ class AttendanceViewModel extends ChangeNotifier {
     } catch (e) {
       if (e is PostgrestException) {
         debugPrint('Get Attendance error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
       } else {
         debugPrint('Get Attendance error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
       }
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
     }
   }
 
   Future<void> getUserAttendance() async {
     try {
+      UserModel user = navigatorKey.currentContext!.read<AuthViewModel>().user;
       String startDate = parseDateToString(_selectedDateUser.start);
       String endDate = parseDateToString(_selectedDateUser.end);
-      int employeeID = _configViewModel.user.employee.id;
+      int employeeID = user.employee.id;
       List<Map<String, dynamic>> data = await _attendanceService.getUserAttendance(employeeID, startDate, endDate);
 
       List<DateTime> dateRange = generateDateRange(_selectedDateUser.start, _selectedDateUser.end);
@@ -103,11 +117,11 @@ class AttendanceViewModel extends ChangeNotifier {
     } catch (e) {
       if (e is PostgrestException) {
         debugPrint('Attendance error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
       } else {
         debugPrint('Attendance error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
       }
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
     }
   }
 
@@ -132,11 +146,11 @@ class AttendanceViewModel extends ChangeNotifier {
     } catch (e) {
       if (e is PostgrestException) {
         debugPrint('Attendance error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
       } else {
         debugPrint('Attendance error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
       }
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
     }
   }
 
@@ -165,15 +179,14 @@ class AttendanceViewModel extends ChangeNotifier {
 
       await getAdminAttendance();
       await index();
-
     } catch (e) {
       if (e is PostgrestException) {
         debugPrint('Store Attendance Worker error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
       } else {
         debugPrint('Store Attendance Worker error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
       }
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
     }
   }
 
@@ -185,7 +198,8 @@ class AttendanceViewModel extends ChangeNotifier {
       double normalizedLoss = weightLoss / (model.laborDetail!.initialWeight! - minimunWeightLoss);
       double score = 100 - (normalizedLoss * 100);
       model.laborDetail!.performanceScore = score;
-      DateTime now = DateTime( _selectedDateAttAdmin.year, _selectedDateAttAdmin.month, _selectedDateAttAdmin.day, DateTime.now().hour, DateTime.now().minute, DateTime.now().second);
+      DateTime now = DateTime(_selectedDateAttAdmin.year, _selectedDateAttAdmin.month, _selectedDateAttAdmin.day,
+          DateTime.now().hour, DateTime.now().minute, DateTime.now().second);
       model.attendance?.checkIn = now;
       await _attendanceService.storeLaborAttendance(model);
 
@@ -194,18 +208,19 @@ class AttendanceViewModel extends ChangeNotifier {
     } catch (e) {
       if (e is PostgrestException) {
         debugPrint('Store Attendance Labor error: ${e.message}');
-        _toastProvider.showToast('Terjadi kesalahan, mohon laporkan!', 'error');
       } else {
         debugPrint('Store Attendance Labor error: ${e.toString()}');
-        _toastProvider.showToast('Terjadi kesalahan, silahkan coba lagi!', 'error');
       }
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan, silahkan coba lagi!'), backgroundColor: Colors.red));
     }
   }
 
-
-  Future<void> index() async{
+  Future<void> index() async {
     currentPageIndex = 0;
-    _selectedDateAttAdmin = DateTime.now();
+    filterType = 0;
+    setAdminDate = DateTime.now();
+    navigatorKey.currentContext!.read<DashboardViewmodel>().title = 'Absensi';
     await getAdminAttendance();
   }
 

@@ -8,10 +8,10 @@ import 'package:nanyang_application_desktop/module/splash_screen.dart';
 import 'package:nanyang_application_desktop/provider/color_provider.dart';
 import 'package:nanyang_application_desktop/provider/date_provider.dart';
 import 'package:nanyang_application_desktop/provider/file_provider.dart';
-import 'package:nanyang_application_desktop/provider/toast_provider.dart';
 import 'package:nanyang_application_desktop/service/announcement_service.dart';
 import 'package:nanyang_application_desktop/service/attendance_service.dart';
 import 'package:nanyang_application_desktop/service/auth_service.dart';
+import 'package:nanyang_application_desktop/service/calendar_service.dart';
 import 'package:nanyang_application_desktop/service/chat_service.dart';
 import 'package:nanyang_application_desktop/service/configuration_service.dart';
 import 'package:nanyang_application_desktop/service/employee_service.dart';
@@ -23,8 +23,10 @@ import 'package:nanyang_application_desktop/service/user_service.dart';
 import 'package:nanyang_application_desktop/viewmodel/announcement_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/attendance_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/auth_viewmodel.dart';
+import 'package:nanyang_application_desktop/viewmodel/calendar_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/chat_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/configuration_viewmodel.dart';
+import 'package:nanyang_application_desktop/viewmodel/dashboard_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/date_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/employee_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/performance_viewmodel.dart';
@@ -52,14 +54,14 @@ Future<void> main() async {
 
     WindowOptions windowOptions = const WindowOptions(
       title: 'Nanyang App',
-      size: Size(1024, 640),
-      minimumSize: Size(1024, 640),
+      size: Size(1280, 800),
+      minimumSize: Size(1280, 800),
       center: true,
       backgroundColor: Colors.transparent,
       skipTaskbar: false,
     );
     windowManager.waitUntilReadyToShow(windowOptions, () async {
-      await windowManager.setAspectRatio(1024 / 640);
+      await windowManager.setAspectRatio(1280 / 800);
       await windowManager.show();
       await windowManager.focus();
     });
@@ -70,6 +72,9 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(
           create: (context) => AuthViewModel(authenticationService: AuthenticationService()),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => DashboardViewmodel(),
         ),
         ChangeNotifierProvider(
           create: (context) => UserViewModel(userService: UserService()),
@@ -99,10 +104,10 @@ Future<void> main() async {
           create: (context) => PerformanceViewmodel(performanceService: PerformanceService()),
         ),
         ChangeNotifierProvider(
-          create: (context) => DateViewModel(),
+          create: (context) => CalendarViewmodel(calendarService: CalendarService()),
         ),
         ChangeNotifierProvider(
-          create: (context) => ToastProvider(),
+          create: (context) => DateViewModel(),
         ),
         ChangeNotifierProvider(
           create: (context) => DateProvider(),
@@ -130,6 +135,9 @@ Future<void> main() async {
               backgroundColor: WidgetStateProperty.all(Colors.blue[100]),
               overlayColor: WidgetStateProperty.all(Colors.blue),
             ),
+          ),
+          cardTheme: const CardTheme(
+            color: Colors.white,
           ),
           useMaterial3: true,
           fontFamily: 'Poppins',

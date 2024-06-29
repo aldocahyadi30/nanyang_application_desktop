@@ -1,7 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:nanyang_application_desktop/color_template.dart';
-import 'package:nanyang_application_desktop/provider/toast_provider.dart';
 import 'package:nanyang_application_desktop/helper.dart';
 import 'package:nanyang_application_desktop/viewmodel/auth_viewmodel.dart';
 import 'package:nanyang_application_desktop/module/global/form/form_button.dart';
@@ -18,7 +17,6 @@ class _LoginFormState extends State<LoginForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   late AuthViewModel _authViewModel;
-  late ToastProvider _toastProvider;
   final _formKey = GlobalKey<FormState>();
   bool _isObscure = true;
   bool _isLoading = false;
@@ -27,7 +25,6 @@ class _LoginFormState extends State<LoginForm> {
   void initState() {
     super.initState();
     _authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-    _toastProvider = Provider.of<ToastProvider>(context, listen: false);
   }
 
   @override
@@ -46,7 +43,12 @@ class _LoginFormState extends State<LoginForm> {
       final password = _passwordController.text;
       await _authViewModel.login(email, password);
     } else {
-      _toastProvider.showToast('Cek kembali inputan anda!', 'error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cek kembali inputan anda!'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
 
     setState(() {

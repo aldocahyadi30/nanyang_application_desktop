@@ -4,7 +4,8 @@ import 'package:nanyang_application_desktop/helper.dart';
 import 'package:nanyang_application_desktop/model/request.dart';
 import 'package:nanyang_application_desktop/module/global/form/form_picker_field.dart';
 import 'package:nanyang_application_desktop/module/global/form/form_text_field.dart';
-import 'package:nanyang_application_desktop/viewmodel/configuration_viewmodel.dart';
+import 'package:nanyang_application_desktop/module/global/other/nanyang_button.dart';
+import 'package:nanyang_application_desktop/module/global/other/nanyang_card.dart';
 import 'package:nanyang_application_desktop/viewmodel/request_viewmodel.dart';
 import 'package:provider/provider.dart';
 
@@ -15,13 +16,10 @@ class RequestDetail extends StatefulWidget {
   State<RequestDetail> createState() => _RequestDetailState();
 }
 
-
-
 class _RequestDetailState extends State<RequestDetail> {
   bool isLoading = false;
   final TextEditingController commentController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
 
   Future<void> response(BuildContext context, String type, RequestViewModel viewmodel) async {
     await showDialog(
@@ -33,7 +31,8 @@ class _RequestDetailState extends State<RequestDetail> {
             backgroundColor: Colors.white,
             title: Text(
               isTypeApproval ? 'Approve Perizinan' : 'Tolak Perizinan',
-              style: TextStyle(color: isTypeApproval ? ColorTemplate.lightVistaBlue : Colors.redAccent, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: isTypeApproval ? ColorTemplate.lightVistaBlue : Colors.redAccent, fontWeight: FontWeight.bold),
             ),
             content: Form(
               key: _formKey,
@@ -42,11 +41,11 @@ class _RequestDetailState extends State<RequestDetail> {
                 validator: isTypeApproval
                     ? null
                     : (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Alasan Penolakan tidak boleh kosong';
-                  }
-                  return null;
-                },
+                        if (value == null || value.isEmpty) {
+                          return 'Alasan Penolakan tidak boleh kosong';
+                        }
+                        return null;
+                      },
                 maxLines: 5,
                 decoration: InputDecoration(
                   hintText: isTypeApproval ? 'Berikan Komentar (Opsional)' : 'Alasan Penolakan (Wajib diisi)',
@@ -65,8 +64,9 @@ class _RequestDetailState extends State<RequestDetail> {
             actions: [
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
-                style:
-                ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: isTypeApproval ? ColorTemplate.lightVistaBlue : Colors.redAccent),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: isTypeApproval ? ColorTemplate.lightVistaBlue : Colors.redAccent),
                 child: const Text('Batal'),
               ),
               ElevatedButton(
@@ -84,12 +84,13 @@ class _RequestDetailState extends State<RequestDetail> {
                     }
                   }
                 },
-                style:
-                ElevatedButton.styleFrom(backgroundColor: isTypeApproval ? ColorTemplate.lightVistaBlue : Colors.redAccent, foregroundColor: Colors.white),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: isTypeApproval ? ColorTemplate.lightVistaBlue : Colors.redAccent,
+                    foregroundColor: Colors.white),
                 child: isLoading
                     ? const CircularProgressIndicator(
-                  color: Colors.white,
-                )
+                        color: Colors.white,
+                      )
                     : Text(isTypeApproval ? 'Approve' : 'Tolak'),
               ),
             ],
@@ -101,109 +102,139 @@ class _RequestDetailState extends State<RequestDetail> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<RequestViewModel>(builder: (context, viewmodel, child) {
-      RequestModel model = viewmodel.selectedRequest;
-      return SingleChildScrollView(
-        child: Column(
-          children: [
-            FormTextField(
-              title: 'Nama',
-              initialValue: model.requester.name,
-              isReadOnly: true,
-            ),
-            SizedBox(height: dynamicHeight(24, context)),
-            _buildTypeField(context, model.type),
-            SizedBox(height: dynamicHeight(24, context)),
-            _buildDate(context, model),
-            SizedBox(height: dynamicHeight(24, context)),
-            FormTextField(
-              title: 'Keterangan',
-              initialValue: model.reason,
-              maxLines: 3,
-              isReadOnly: true,
-            ),
-            if (model.filePath != null && model.filePath!.isNotEmpty)
-              Column(
-                children: [
-                  SizedBox(height: dynamicHeight(24, context)),
-                  FormPickerField(
-                    title: 'File',
-                    initialValue: model.filePath?.split("/").last,
-                    picker: IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.download, color: ColorTemplate.violetBlue),
-                    ),
-                  )
-                ],
+    return Consumer<RequestViewModel>(
+      builder: (context, viewmodel, child) {
+        RequestModel model = viewmodel.selectedRequest;
+        return NanyangCard(
+          title: Text(
+            'Detail Perizinan',
+            style: TextStyle(fontSize: dynamicFontSize(24, context), fontWeight: FontWeight.w800),
+          ),
+          actions: [
+            NanyangButton(
+              size: ButtonSize.medium,
+              onPressed: () => viewmodel.index(),
+              backgroundColor: Colors.grey,
+              icon: Icon(
+                Icons.chevron_left,
+                color: Colors.white,
+                size: dynamicFontSize(24, context),
               ),
-            if (model.status == 0)
-              Column(
-                children: [SizedBox(height: dynamicHeight(48, context)), Row(
-                  children: [
-                    Expanded(flex:8,child: Container(),),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton(
-                        onPressed: () => response(context, 'reject', viewmodel),
-                        style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
-                          foregroundColor: WidgetStateProperty.all<Color>(Colors.red),
-                          overlayColor: WidgetStateProperty.all<Color>(Colors.red.withOpacity(0.1)),
-                        ),
-                        child: const Text('Tolak'),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton(
-                        onPressed: () => response(context, 'approve', viewmodel),
-                        style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all<Color>(ColorTemplate.vistaBlue),
-                          foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
-                          overlayColor: WidgetStateProperty.all<Color>(ColorTemplate.periwinkle.withOpacity(0.1)),
-                        ),
-                        child: const Text('Approve'),
-                      ),
-                    ),
-                  ],
-                )],
+              child: Text(
+                'Kembali',
+                style: TextStyle(color: Colors.white, fontSize: dynamicFontSize(16, context)),
               ),
-            SizedBox(height: dynamicHeight(24, context)),
-            if (model.status != 0)
-              Column(
-                children: [
-                  FormTextField(
-                    title: 'Status',
-                    initialValue: model.status == 1 ? 'Disetujui' : 'Ditolak',
-                    isReadOnly: true,
-                  ),
-                  SizedBox(height: dynamicHeight(24, context)),
-                  FormTextField(
-                    title: 'Admin',
-                    initialValue: model.status == 1 ? model.approver!.name : model.rejecter!.name,
-                    isReadOnly: true,
-                  ),
-                  SizedBox(height: dynamicHeight(24, context)),
-                  FormTextField(
-                    title: 'Waktu Respon',
-                    initialValue: model.status == 1
-                        ? parseDateToStringFormatted(model.approvalTime!)
-                        : parseDateToStringFormatted(model.rejectTime!),
-                    isReadOnly: true,
-                  ),
-                  SizedBox(height: dynamicHeight(24, context)),
-                  FormTextField(
-                    title: 'Keterangan Admin',
-                    initialValue: model.comment,
-                    maxLines: 3,
-                    isReadOnly: true,
-                  ),
-                ],
-              )
+            ),
           ],
-        ),
-      );
-    });
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                FormTextField(
+                  title: 'Nama',
+                  initialValue: model.requester.name,
+                  isReadOnly: true,
+                ),
+                SizedBox(height: dynamicHeight(24, context)),
+                _buildTypeField(context, model.type),
+                SizedBox(height: dynamicHeight(24, context)),
+                _buildDate(context, model),
+                SizedBox(height: dynamicHeight(24, context)),
+                FormTextField(
+                  title: 'Keterangan',
+                  initialValue: model.reason,
+                  maxLines: 3,
+                  isReadOnly: true,
+                ),
+                if (model.filePath != null && model.filePath!.isNotEmpty)
+                  Column(
+                    children: [
+                      SizedBox(height: dynamicHeight(24, context)),
+                      FormPickerField(
+                        title: 'File',
+                        initialValue: model.filePath?.split("/").last,
+                        picker: IconButton(
+                          onPressed: () {},
+                          icon: const Icon(Icons.download, color: ColorTemplate.violetBlue),
+                        ),
+                      )
+                    ],
+                  ),
+                if (model.status == 0)
+                  Column(
+                    children: [
+                      SizedBox(height: dynamicHeight(48, context)),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 8,
+                            child: Container(),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton(
+                              onPressed: () => response(context, 'reject', viewmodel),
+                              style: ButtonStyle(
+                                backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
+                                foregroundColor: WidgetStateProperty.all<Color>(Colors.red),
+                                overlayColor: WidgetStateProperty.all<Color>(Colors.red.withOpacity(0.1)),
+                              ),
+                              child: const Text('Tolak'),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton(
+                              onPressed: () => response(context, 'approve', viewmodel),
+                              style: ButtonStyle(
+                                backgroundColor: WidgetStateProperty.all<Color>(ColorTemplate.vistaBlue),
+                                foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
+                                overlayColor: WidgetStateProperty.all<Color>(ColorTemplate.periwinkle.withOpacity(0.1)),
+                              ),
+                              child: const Text('Approve'),
+                            ),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                SizedBox(height: dynamicHeight(24, context)),
+                if (model.status != 0)
+                  Column(
+                    children: [
+                      FormTextField(
+                        title: 'Status',
+                        initialValue: model.status == 1 ? 'Disetujui' : 'Ditolak',
+                        isReadOnly: true,
+                      ),
+                      SizedBox(height: dynamicHeight(24, context)),
+                      FormTextField(
+                        title: 'Admin',
+                        initialValue: model.status == 1 ? model.approver!.name : model.rejecter!.name,
+                        isReadOnly: true,
+                      ),
+                      SizedBox(height: dynamicHeight(24, context)),
+                      FormTextField(
+                        title: 'Waktu Respon',
+                        initialValue: model.status == 1
+                            ? parseDateToStringFormatted(model.approvalTime!)
+                            : parseDateToStringFormatted(model.rejectTime!),
+                        isReadOnly: true,
+                      ),
+                      SizedBox(height: dynamicHeight(24, context)),
+                      FormTextField(
+                        title: 'Keterangan Admin',
+                        initialValue: model.comment,
+                        maxLines: 3,
+                        isReadOnly: true,
+                      ),
+                    ],
+                  )
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildTypeField(BuildContext context, int type) {

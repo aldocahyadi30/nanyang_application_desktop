@@ -5,6 +5,7 @@ import 'package:nanyang_application_desktop/helper.dart';
 import 'package:nanyang_application_desktop/module/home_screen.dart';
 import 'package:nanyang_application_desktop/module/auth/screen/login_screen.dart';
 import 'package:nanyang_application_desktop/viewmodel/announcement_viewmodel.dart';
+import 'package:nanyang_application_desktop/viewmodel/auth_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/configuration_viewmodel.dart';
 import 'package:nanyang_application_desktop/viewmodel/user_viewmodel.dart';
 import 'package:provider/provider.dart';
@@ -44,10 +45,9 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
       );
     } else {
-        await Provider.of<UserViewModel>(context, listen: false)
-          .getUserByID(Supabase.instance.client.auth.currentUser!.id)
-          .then((userData) {
-        Provider.of<ConfigurationViewModel>(context, listen: false).setUser(userData);
+        await Provider.of<AuthViewModel>(context, listen: false)
+          .initialize()
+          .then((_) {
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(

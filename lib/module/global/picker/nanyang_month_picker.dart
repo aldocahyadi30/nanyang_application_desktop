@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:month_picker_dialog/month_picker_dialog.dart';
-import 'package:nanyang_application_desktop/provider/date_provider.dart';
-import 'package:nanyang_application_desktop/viewmodel/date_viewmodel.dart';
-import 'package:nanyang_application_desktop/viewmodel/salary_viewmodel.dart';
-import 'package:provider/provider.dart';
 
 class NanyangMonthPicker extends StatefulWidget {
   final TextEditingController? controller;
-  final String type;
   final Color color;
   final DateTime? selectedDate;
   final bool isDisabled;
-  const NanyangMonthPicker({super.key, this.controller, required this.type, this.color = Colors.blue, this.selectedDate, this.isDisabled = false});
+  final Function(DateTime)? onDatePicked;
+  const NanyangMonthPicker({super.key, this.controller, this.color = Colors.blue, this.selectedDate, this.isDisabled = false, this.onDatePicked});
 
   @override
   State<NanyangMonthPicker> createState() => _NanyangMonthPickerState();
@@ -31,7 +27,7 @@ class _NanyangMonthPickerState extends State<NanyangMonthPicker> {
       });
     } else {
       Future.delayed(Duration.zero, () {
-        selectedDate = Provider.of<DateViewModel>(context, listen: false).initializeDateForPicker(widget.controller!, widget.type);
+        selectedDate = DateTime.now();
       });
     }
   }
@@ -49,13 +45,11 @@ class _NanyangMonthPickerState extends State<NanyangMonthPicker> {
         if (widget.controller != null) {
           widget.controller!.text = DateFormat('MMMM yyyy').format(selectedDate);
         }
-        if (widget.type == 'salary-user') {
-          Provider.of<DateProvider>(context, listen: false).setSalaryDate(selectedDate);
-        } else if (widget.type == 'salary-admin') {
-          Provider.of<SalaryViewModel>(context, listen: false).setDate(selectedDate);
-          Provider.of<SalaryViewModel>(context, listen: false).getSalary();
-        }
       });
+
+      if (widget.onDatePicked != null) {
+        widget.onDatePicked!(selectedDate);
+      }
     }
   }
 

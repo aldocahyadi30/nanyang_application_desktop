@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:nanyang_application_desktop/model/employee.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,8 +7,7 @@ class EmployeeService {
   Future<List<Map<String, dynamic>>> getEmployee() async {
     try {
       final data = await supabase.from('karyawan').select('''
-       id_karyawan,
-            nama,
+       *,
         posisi!inner(*)
       ''').order('nama', ascending: true);
 
@@ -23,8 +21,10 @@ class EmployeeService {
 
   Future<List<int>> getEmployeeCount() async {
     try {
-      final worker = await supabase.from('karyawan').select('''id_karyawan, posisi!inner(tipe)''').eq('posisi.tipe', 1).count();
-      final labor = await supabase.from('karyawan').select('''id_karyawan, posisi!inner(tipe)''').eq('posisi.tipe', 2).count();
+      final worker =
+          await supabase.from('karyawan').select('''id_karyawan, posisi!inner(tipe)''').eq('posisi.tipe', 1).count();
+      final labor =
+          await supabase.from('karyawan').select('''id_karyawan, posisi!inner(tipe)''').eq('posisi.tipe', 2).count();
 
       return [worker.count, labor.count];
     } on PostgrestException catch (error) {
@@ -80,7 +80,7 @@ class EmployeeService {
     }
   }
 
-  Future<void> delete(int id) async{
+  Future<void> delete(int id) async {
     try {
       await supabase.from('karyawan').delete().eq('id_karyawan', id);
     } on PostgrestException catch (error) {
